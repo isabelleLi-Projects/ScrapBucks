@@ -37,14 +37,31 @@ CREATE TABLE DriverLocations (
 );
 
 CREATE TABLE RecyclingLocations (
-
+    recycling_location_id   INT AUTO_INCREMENT PRIMARY KEY,
+    zip_code                CHAR(5),
+    CONSTRAINT check_5_digits
+        CHECK (zip_code REGEXP '^[0-9]{5}$')
+    latitude                FLOAT    NOT NULL,
+    longitude               FLOAT    NOT NULL,
+    city                    VARCHAR(100)  NOT NULL,
+    adddress                VARCHAR(100)  NOT NULL
 );
 
 CREATE TABLE Reviews (
-
+    review_id   INT AUTO_INCREMENT PRIMARY KEY,
+    title       VARCHAR(50)        NOT NULL,
+    notes       VARCHAR(300)       NOT NULL, -- description
+    num_stars   REAL               NOT NULL
+    FOREIGN KEY (user_id) REFERENCES User(user_id) 
 );
 
 CREATE TABLE Messages (
-
+    message_id       INT           NOT NULL,
+    has_driver       BOOLEAN       NOT NULL,
+    is_read          BOOLEAN       NOT NULL,
+    time_sent        TIMESTAMP     NOT NULL,
+    PRIMARY KEY (message_id, post_id),
+    CONSTRAINT fk_messages_weak_entity_set
+      FOREIGN KEY (post_id) REFERENCES Post(post_id) 
+      ON DELETE CASCADE
 );
-
