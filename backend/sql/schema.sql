@@ -19,8 +19,8 @@ CREATE TABLE TimeAvailable (
     day_of_week     INT      NOT NULL, 
     start_time      TIME     NOT NULL,    
     end_time        TIME     NOT NULL,
-    PRIMARY KEY (post_id, time_id),
-    FOREIGN KEY (post_id) REFERENCES Post(postID) ON DELETE CASCADE
+    FOREIGN KEY (post_id) REFERENCES Post(post_id) ON DELETE CASCADE,
+    PRIMARY KEY (post_id, time_id)
 );
 
 CREATE TABLE Post (
@@ -31,6 +31,7 @@ CREATE TABLE Post (
     photo            VARCHAR(100)  NOT NULL,
     has_driver       BOOLEAN       NOT NULL,
     is_picked_up     BOOLEAN       NOT NULL,
+    posted_by        INT           NOT NULL,
     FOREIGN KEY (posted_by) REFERENCES User(user_id)
 
 
@@ -41,6 +42,7 @@ CREATE TABLE DriverLocations (
     latitude             FLOAT       NOT NULL,
     longitude            FLOAT       NOT NULL,
     updated_at           TIMESTAMP   NOT NULL,
+    driver               INT         NOT NULL,
     FOREIGN KEY (driver) REFERENCES User(user_id), 
 
 );
@@ -49,7 +51,7 @@ CREATE TABLE RecyclingLocations (
     recycling_location_id   INT AUTO_INCREMENT PRIMARY KEY,
     zip_code                CHAR(5),
     CONSTRAINT check_5_digits
-        CHECK (zip_code REGEXP '^[0-9]{5}$')
+        CHECK (zip_code REGEXP '^[0-9]{5}$'),
     latitude                FLOAT    NOT NULL,
     longitude               FLOAT    NOT NULL,
     city                    VARCHAR(100)  NOT NULL,
@@ -60,8 +62,11 @@ CREATE TABLE Reviews (
     review_id   INT AUTO_INCREMENT PRIMARY KEY,
     title       VARCHAR(50)        NOT NULL,
     notes       VARCHAR(300)       NOT NULL, -- description
-    num_stars   REAL               NOT NULL
-    FOREIGN KEY (user_id) REFERENCES User(user_id) 
+    num_stars   REAL               NOT NULL,
+    created_by  INT                NOT NULL,
+    FOREIGN KEY (created_by) REFERENCES User(user_id),
+    for_user    INT                NOT NULL,
+    FOREIGN KEY (for_user) REFERENCES User(user_id)
 );
 
 CREATE TABLE Messages (
@@ -69,8 +74,8 @@ CREATE TABLE Messages (
     has_driver       BOOLEAN       NOT NULL,
     is_read          BOOLEAN       NOT NULL,
     time_sent        TIMESTAMP     NOT NULL,
+    post_id          INT           NOT NULL,
     PRIMARY KEY (message_id, post_id),
     CONSTRAINT fk_messages_weak_entity_set
-      FOREIGN KEY (post_id) REFERENCES Post(post_id) 
-      ON DELETE CASCADE
+    FOREIGN KEY (post_id) REFERENCES Post(post_id) ON DELETE CASCADE
 );
