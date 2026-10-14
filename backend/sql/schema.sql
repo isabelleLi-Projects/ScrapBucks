@@ -68,15 +68,17 @@ CREATE TABLE Reviews (
     FOREIGN KEY (created_by) REFERENCES User(user_id),
     for_user    INT                NOT NULL,
     FOREIGN KEY (for_user) REFERENCES User(user_id)
+    CHECK (created_by <> for_user) -- prevents users from reviewing themselves
 );
 
+-- Weak Entity Set depends on Post
 CREATE TABLE Messages (
     message_id       INT           NOT NULL,
     has_driver       BOOLEAN       NOT NULL,
     is_read          BOOLEAN       NOT NULL,
     time_sent        TIMESTAMP     NOT NULL,
     post_id          INT           NOT NULL,
+    message_text     VARCHAR(1000) NOT NULL,
     PRIMARY KEY (message_id, post_id),
-    CONSTRAINT fk_messages_weak_entity_set
     FOREIGN KEY (post_id) REFERENCES Post(post_id) ON DELETE CASCADE
 );
