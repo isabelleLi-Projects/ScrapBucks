@@ -2,7 +2,7 @@ DROP DATABASE IF EXISTS scrapbucks_db;
 CREATE DATABASE scrapbucks_db;
 USE scrapbucks_db;
 
-CREATE TABLE User (
+CREATE TABLE Users (
   user_id   INT AUTO_INCREMENT PRIMARY KEY,
   display_name      VARCHAR(100)  NOT NULL,
   email             VARCHAR(100)  NOT NULL UNIQUE,
@@ -10,9 +10,12 @@ CREATE TABLE User (
   profile_photo     VARCHAR(100)  NOT NULL,
   user_role         VARCHAR(20)   NOT NULL, -- collector or customer
   rating            DECIMAL(3,2)  NOT NULL,
+
+  CHECK (user_role IN ('collector', 'customer')),
+  CHECK (rating BETWEEN 0.00 AND 5.00)
 );
 
-CREATE TABLE Post (
+CREATE TABLE Posts (
     post_id   INT AUTO_INCREMENT PRIMARY KEY,
     num_bags         INT            NOT NULL, 
     price            DECIMAL (10,2) NOT NULL,
@@ -21,9 +24,9 @@ CREATE TABLE Post (
     has_driver       BOOLEAN        NOT NULL DEFAULT FALSE,
     is_picked_up     BOOLEAN        NOT NULL DEFAULT FALSE,
     posted_by        INT            NOT NULL,
-    FOREIGN KEY (posted_by) REFERENCES User(user_id),
+    FOREIGN KEY (posted_by) REFERENCES Users(user_id),
     driver_id        INT,
-    FOREIGN KEY (driver) REFERENCES User(user_id)
+    FOREIGN KEY (driver_id) REFERENCES Users(user_id)
 
 );
 
@@ -35,7 +38,7 @@ CREATE TABLE TimeAvailable (
     start_time      TIME     NOT NULL,    
     end_time        TIME     NOT NULL,
     PRIMARY KEY (post_id, time_id),
-    FOREIGN KEY (post_id) REFERENCES Post(post_id) ON DELETE CASCADE
+    FOREIGN KEY (post_id) REFERENCES Posts(post_id) ON DELETE CASCADE
 );
 
 CREATE TABLE DriverLocations (
@@ -43,8 +46,8 @@ CREATE TABLE DriverLocations (
     latitude             DECIMAL(10,8)    NOT NULL,
     longitude            DECIMAL(11,8)    NOT NULL,
     updated_at           TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    driver               INT              NOT NULL,
-    FOREIGN KEY (driver) REFERENCES User(user_id), 
+    driver_id            INT              NOT NULL,
+    FOREIGN KEY (driver_id) REFERENCES Users(user_id) 
 
 );
 
@@ -63,11 +66,11 @@ CREATE TABLE Reviews (
     review_id   INT AUTO_INCREMENT PRIMARY KEY,
     title       VARCHAR(50)        NOT NULL,
     notes       VARCHAR(300)       NOT NULL, -- description
-    num_stars   REAL               NOT NULL,
+    num_stars   INT                NOT NULL,
     created_by  INT                NOT NULL,
-    FOREIGN KEY (created_by) REFERENCES User(user_id),
+    FOREIGN KEY (created_by) REFERENCES Users(user_id),
     for_user    INT                NOT NULL,
-    FOREIGN KEY (for_user) REFERENCES User(user_id)
+    FOREIGN KEY (for_user) REFERENCES Users(user_id),
     CHECK (created_by <> for_user) -- prevents users from reviewing themselves
 );
 
@@ -76,9 +79,9 @@ CREATE TABLE Messages (
     message_id       INT           NOT NULL,
     has_driver       BOOLEAN       NOT NULL,
     is_read          BOOLEAN       NOT NULL,
-    time_sent        TIMESTAMP     NOT NULL,
+    time_sent        TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     post_id          INT           NOT NULL,
     message_text     VARCHAR(1000) NOT NULL,
     PRIMARY KEY (message_id, post_id),
-    FOREIGN KEY (post_id) REFERENCES Post(post_id) ON DELETE CASCADE
+    FOREIGN KEY (post_id) REFERENCES Posts(post_id) ON DELETE CASCADE
 );
