@@ -3,14 +3,24 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
+  useWindowDimensions
 } from 'react-native';
 
 export default function LoginScreen() {
+  const {width, height} = useWindowDimensions(); // automatically measures the app window 
+  const scale = Math.min(width/390, height/844, 1); //compares everything to a base size phone 390 x 844, 1 is to stop large phones from making things bigger
+  const s = (value: number) => Math.round(value * scale);
+  const styles = createStyles(s);
+
+  const isSmallScreen = height < 700;
+  const horizontalPadding = Math.min(width * 0.08, 45); //use 8% of the screen width
+  const topPadding = Math.min(height * 0.4, 100);
+  const bottomPadding = Math.min(height * 0.4, 80);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -30,23 +40,35 @@ export default function LoginScreen() {
       style={styles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
+      <View style={styles.scrollContent}>
         <View style={[styles.circle, styles.topLeftCircle]} />
         <View style={[styles.circle, styles.topCenterCircle]} />
         <View style={[styles.circle, styles.topRightCircle]} />
         <View style={[styles.circle, styles.bottomLeftCircle]} />
         <View style={[styles.circle, styles.bottomRightCircle]} />
 
-        <View style={styles.content}>
+        <View style={[styles.content,
+            {
+              paddingHorizontal: horizontalPadding,
+              paddingTop: topPadding,
+              paddingBottom: bottomPadding
+            },
+          ]}
+        >
           <View style={styles.logo}>
             <Text style={styles.logoText}>ϟ</Text>
           </View>
-
-          <Text style={styles.title}>Welcome back</Text>
+          <Text
+            style={[
+              styles.title,
+              {
+                fontSize: s(38),
+                lineHeight: s(44),
+              },
+            ]}
+          >
+            Welcome back
+          </Text>
           <Text style={styles.subtitle}>Sign in to continue</Text>
 
           <View style={styles.form}>
@@ -75,7 +97,7 @@ export default function LoginScreen() {
             <View style={styles.inputContainer}>
               <Text style={styles.inputIcon}>⌑</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input,{paddingHorizontal: isSmallScreen ? 9 : 13,},]}
                 placeholder="Password"
                 placeholderTextColor="#9da7b7"
                 secureTextEntry={!showPassword}
@@ -128,12 +150,13 @@ export default function LoginScreen() {
             </Pressable>
           </View>
         </View>
-      </ScrollView>
+      </View>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (s: (value: number) => number) =>
+  StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: '#efffff',
@@ -144,29 +167,32 @@ const styles = StyleSheet.create({
   },
   content: {
     zIndex: 1,
+    flex: 1, // dynamically fits the screen
     width: '100%',
-    maxWidth: 590,
+    maxWidth: s(590),
     alignSelf: 'center',
-    paddingHorizontal: 42,
-    paddingTop: 108,
-    paddingBottom: 45,
+    paddingTop: s(108),
+    paddingBottom: s(45),
+    justifyContent: 'space-between' // distribute items evenly
   },
+
+  
   circle: {
     position: 'absolute',
-    borderRadius: 999,
+    borderRadius: s(999),
   },
   topLeftCircle: {
-    width: 300,
-    height: 300,
-    top: -85,
-    left: -115,
+    width: s(300),
+    height: s(300),
+    top: s(-85),
+    left: s(-115),
     backgroundColor: '#f9f6c7',
   },
   topCenterCircle: {
-    width: 250,
-    height: 250,
-    top: -150,
-    left: 135,
+    width: s(250),
+    height: s(250),
+    top: s(-150),
+    left: s(135),
     backgroundColor: '#d9f4d8',
   },
   topRightCircle: {
@@ -177,124 +203,123 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f6c7',
   },
   bottomLeftCircle: {
-    width: 270,
-    height: 270,
-    bottom: -165,
-    left: -135,
+    width: s(270),
+    height: s(270),
+    bottom: s(-165),
+    left: s(-135),
     backgroundColor: '#f9f6c7',
   },
   bottomRightCircle: {
-    width: 410,
-    height: 410,
-    right: -130,
-    bottom: -170,
+    width: s(410),
+    height: s(410),
+    right: s(-130),
+    bottom: s(-170),
     backgroundColor: '#d9f4d8',
   },
   logo: {
-    width: 43,
-    height: 43,
+    width: s(40),
+    height: s(40),
     alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 46,
-    borderRadius: 22,
+    marginBottom: s(20),
+    borderRadius: s(22),
     backgroundColor: '#3d83f3',
   },
   logoText: {
     color: '#ffffff',
-    fontSize: 31,
+    fontSize: s(31),
     fontWeight: '700',
-    lineHeight: 35,
+    lineHeight: s(35),
   },
   title: {
     color: '#100b12',
-    fontSize: 54,
+    fontSize: s(54),
     fontWeight: '500',
     letterSpacing: -2,
     textAlign: 'center',
   },
   subtitle: {
-    marginTop: 23,
-    marginBottom: 82,
+    marginTop: s(8),
+    marginBottom: s(28),
     color: '#68758b',
-    fontSize: 22,
+    fontSize: s(16),
     textAlign: 'center',
   },
   form: {
     width: '100%',
   },
   label: {
-    marginBottom: 11,
+    marginBottom: s(11),
     color: '#30256b',
-    fontSize: 21,
+    fontSize: s(21),
     fontWeight: '500',
   },
   inputContainer: {
-    height: 78,
+    height: s(42),
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1.5,
+    borderWidth: s(1),
     borderColor: '#d9dfe5',
-    borderRadius: 18,
+    borderRadius: s(14),
     backgroundColor: '#fbfbfc',
   },
   inputIcon: {
-    width: 26,
-    marginLeft: 19,
+    width: s(25),
+    marginLeft: s(15),
     color: '#9da7b7',
-    fontSize: 22,
+    fontSize: s(22),
     textAlign: 'center',
   },
   input: {
     flex: 1,
     height: '100%',
-    paddingHorizontal: 13,
     color: '#343c4c',
-    fontSize: 20,
+    fontSize: s(14),
   },
   passwordHeader: {
-    marginTop: 31,
+    marginTop: s(31),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   forgotPassword: {
-    marginBottom: 11,
+    marginBottom: s(11),
     color: '#5a5282',
-    fontSize: 18,
+    fontSize: s(16),
     fontWeight: '700',
   },
   eyeButton: {
-    paddingHorizontal: 18,
+    paddingHorizontal: s(18),
   },
   eyeText: {
     color: '#8d98a9',
-    fontSize: 21,
+    fontSize: s(20),
   },
   signInButton: {
-    height: 79,
+    height: s(55),
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 36,
-    borderRadius: 18,
+    marginTop: s(20),
+    borderRadius: s(14),
     backgroundColor: '#a4e68e',
   },
   signInText: {
     color: '#2f236b',
-    fontSize: 25,
+    fontSize: s(25),
     fontWeight: '600',
   },
   message: {
-    marginTop: 12,
+    marginTop: s(12),
     color: '#59687b',
-    fontSize: 14,
+    fontSize: s(14),
     textAlign: 'center',
   },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 22,
-    marginVertical: 94,
+    gap: s(22),
+    marginVertical: s(25),
   },
   divider: {
     height: 1,
@@ -303,66 +328,66 @@ const styles = StyleSheet.create({
   },
   orText: {
     color: '#657187',
-    fontSize: 18,
+    fontSize: s(18),
   },
   googleButton: {
-    height: 78,
+    height: s(55),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 18,
-    borderWidth: 1.5,
+    gap: s(12),
+    borderWidth: s(1.5),
     borderColor: '#d9dfe5',
-    borderRadius: 18,
+    borderRadius: s(14),
     backgroundColor: '#ffffff',
   },
   googleIcon: {
-    width: 27,
-    height: 27,
-    borderWidth: 3,
+    width: s(27),
+    height: s(27),
+    borderWidth: s(3),
     borderColor: '#3c4659',
-    borderRadius: 14,
+    borderRadius: s(14),
     color: '#3c4659',
-    fontSize: 22,
-    lineHeight: 20,
+    fontSize: s(22),
+    lineHeight: s(20),
     textAlign: 'center',
   },
   googleText: {
     color: '#3c4659',
-    fontSize: 23,
+    fontSize: s(23),
     fontWeight: '600',
   },
   appleButton: {
-    height: 78,
+    height: s(55),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 18,
-    marginTop: 18,
-    borderRadius: 18,
+    gap: s(12),
+    marginTop: s(12),
+    borderRadius: s(14),
     backgroundColor: '#2c2d35',
   },
   appleIcon: {
     color: '#ffffff',
-    fontSize: 25,
+    fontSize: s(15),
   },
   appleText: {
     color: '#ffffff',
-    fontSize: 23,
+    fontSize: s(23),
     fontWeight: '600',
   },
   signupRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 50,
+    marginTop: s(24),
   },
   signupText: {
     color: '#30256b',
-    fontSize: 20,
+    fontSize: s(20),
   },
   signupLink: {
     color: '#30256b',
-    fontSize: 20,
+    fontSize: s(20),
     fontWeight: '700',
   },
 });
