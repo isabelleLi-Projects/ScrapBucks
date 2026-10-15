@@ -175,8 +175,6 @@ const createStyles = (s: (value: number) => number) =>
     paddingBottom: s(45),
     justifyContent: 'space-between' // distribute items evenly
   },
-
-  
   circle: {
     position: 'absolute',
     borderRadius: s(999),
@@ -252,7 +250,7 @@ const createStyles = (s: (value: number) => number) =>
   label: {
     marginBottom: s(11),
     color: '#30256b',
-    fontSize: s(21),
+    fontSize: s(18),
     fontWeight: '500',
   },
   inputContainer: {
@@ -286,7 +284,7 @@ const createStyles = (s: (value: number) => number) =>
   forgotPassword: {
     marginBottom: s(11),
     color: '#5a5282',
-    fontSize: s(16),
+    fontSize: s(15),
     fontWeight: '700',
   },
   eyeButton: {
@@ -297,16 +295,16 @@ const createStyles = (s: (value: number) => number) =>
     fontSize: s(20),
   },
   signInButton: {
-    height: s(55),
+    height: s(47),
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: s(20),
+    marginTop: s(25),
     borderRadius: s(14),
     backgroundColor: '#a4e68e',
   },
   signInText: {
     color: '#2f236b',
-    fontSize: s(25),
+    fontSize: s(20),
     fontWeight: '600',
   },
   message: {
@@ -328,10 +326,10 @@ const createStyles = (s: (value: number) => number) =>
   },
   orText: {
     color: '#657187',
-    fontSize: s(18),
+    fontSize: s(12),
   },
   googleButton: {
-    height: s(55),
+    height: s(40),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -358,7 +356,7 @@ const createStyles = (s: (value: number) => number) =>
     fontWeight: '600',
   },
   appleButton: {
-    height: s(55),
+    height: s(40),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -379,7 +377,7 @@ const createStyles = (s: (value: number) => number) =>
   signupRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: s(24),
+    marginTop: s(30),
   },
   signupText: {
     color: '#30256b',
