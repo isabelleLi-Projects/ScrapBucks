@@ -1,6 +1,6 @@
 import { StyleSheet, View } from "react-native";
-import { styles } from "./shared/styles"
-import { Profile } from "./shared/components"
+import { styles } from "../shared/styles"
+import { Profile } from "../shared/components"
 
 export default function CustomerView() {
     return (
