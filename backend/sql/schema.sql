@@ -52,14 +52,24 @@ CREATE TABLE DriverLocations (
 );
 
 CREATE TABLE RecyclingLocations (
-    recycling_location_id   INT AUTO_INCREMENT PRIMARY KEY,
-    zip_code                CHAR(5)          NOT NULL,
+    recycling_location_id   INT AUTO_INCREMENT PRIMARY KEY, --database's internal ID
+    calrecycle_id           VARCHAR(100)       NOT NULL UNIQUE, -- location's ID from CalRecycle
+    facility_name           VARCHAR(200)       NOT NULL, -- name of the CRV recycling place
+    zip_code                CHAR(5)            NOT NULL,
     CONSTRAINT check_5_digits
         CHECK (zip_code REGEXP '^[0-9]{5}$'),
     latitude                DECIMAL(10,8)    NOT NULL,
     longitude               DECIMAL(11,8)    NOT NULL,
     city                    VARCHAR(100)     NOT NULL,
-    recycle_address         VARCHAR(100)     NOT NULL
+    recycle_address         VARCHAR(100)     NOT NULL,
+    phone                   VARCHAR(30),
+    is_active               BOOLEAN          NOT NULL DEFAULT TRUE, -- False when a location not part of CalRecycle data 
+    source_updated_at       DATETIME         NULL, -- check if calRecycle provides this data
+    last_synced_at          DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP, -- when the system last checked CalRecycle
+    created_at              DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP, 
+    updated_at              DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP -- changes the time to the time when the row is updated
+    -- upsert = combines "update" and "insert" for the insert
+
 );
 
 CREATE TABLE Reviews (
