@@ -21,6 +21,8 @@ CREATE TABLE Posts (
     price            DECIMAL (10,2) NOT NULL,
     pickup_location  VARCHAR(100)   NOT NULL,
     photo            VARCHAR(100)   NOT NULL,
+    delivery_instruction 
+                    ENUM('pickup outside', 'knock please') NOT NULL,
     has_driver       BOOLEAN        NOT NULL DEFAULT FALSE,
     is_picked_up     BOOLEAN        NOT NULL DEFAULT FALSE,
     posted_by        INT            NOT NULL,

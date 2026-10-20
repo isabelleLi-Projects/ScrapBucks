@@ -3,31 +3,61 @@ import { styles } from "../shared/styles"
 import { Profile } from "../shared/components"
 
 export default function CustomerView() {
+  const posts: PostData[]  = [
+    {
+      post_id: 1,
+      photo: "https://react.dev/images/docs/scientists/MK3eW3As.jpg",
+      delivery_instruction: "pickup outside",
+    },
+    {
+      post_id: 2,
+      photo: "https://react.dev/images/docs/scientists/MK3eW3As.jpg",
+      delivery_instruction: "knock please",
+    },
+  ];
     return (
         <View style={styles.container}>
             <Profile />
             <Text>Posted:</Text>
             <ScrollView>
-              <Post />
+              {posts.map((post) => (
+                <Post key={post.post_id} post={post} />
+              ))}
             </ScrollView>
             
         </View>
     );
 }
 
-function Post() {
+type PostData = {
+  post_id: number;
+  photo: string;
+  delivery_instruction: "pickup outside" | "knock please";
+};
+
+function Post({ post }: { post: PostData }) {
   return (
-     <View style={customerStyles.PostFrame}>
+    <View style={customerStyles.PostFrame}>
       <View style={customerStyles.Row}>
-        <Image style={customerStyles.PostImage}
-            source={{
-              uri: "https://react.dev/images/docs/scientists/MK3eW3As.jpg",
-            }}
-            accessibilityLabel="Profile photo"
-        />
-        <Text>hello</Text>
+        {/* Wrapper (image container) allows the bubble to be positioned over the image */}
+        <View style={customerStyles.ImageContainer}>
+          <Image
+            style={customerStyles.PostImage}
+            source={{ uri: post.photo }}
+            resizeMode="cover"
+          />
+
+          <View style={customerStyles.InstructionBubble}>
+            <Text style={customerStyles.InstructionText}>
+              {post.delivery_instruction}
+            </Text>
+          </View>
+        </View>
+
+        <Text style={customerStyles.PostText}>
+          Post information
+        </Text>
       </View>
-      
     </View>
   );
 }
@@ -42,17 +72,45 @@ const customerStyles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     padding: 20,
   },
-  PostImage: {
-
-    width: "45%",
-    aspectRatio: 1,
-    borderRadius: 10,
-    marginRight: 20
-  }, 
 
   Row: {
     flexDirection: "row",
     //alignItems: "center",
   },
-  
+
+  ImageContainer: {
+    width: "45%",
+    aspectRatio: 1,
+    position: "relative",
+  },
+
+  PostImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 10,
+  }, 
+
+  InstructionBubble: {
+    position: "absolute",
+    right: -8,
+    bottom: -12,
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 15,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+
+  InstructionText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+
+  PostText: {
+    marginLeft: 20,
+    fontSize: 16,
+  },
 });
