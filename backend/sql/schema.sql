@@ -54,16 +54,20 @@ CREATE TABLE DriverLocations (
 );
 
 CREATE TABLE RecyclingLocations (
-    recycling_location_id   INT AUTO_INCREMENT PRIMARY KEY, --database's internal ID
-    calrecycle_id           VARCHAR(100)       NOT NULL UNIQUE, -- location's ID from CalRecycle
-    facility_name           VARCHAR(200)       NOT NULL, -- name of the CRV recycling place
+     -- database's internal ID
+    recycling_location_id   INT AUTO_INCREMENT PRIMARY KEY,
+    -- location's ID from CalRecycle
+    calrecycle_id           VARCHAR(100)       NOT NULL UNIQUE, 
+    -- name of the CRV recycling place
+    facility_name           VARCHAR(200)       NOT NULL, 
+    
     zip_code                CHAR(5)            NOT NULL,
     CONSTRAINT check_5_digits
         CHECK (zip_code REGEXP '^[0-9]{5}$'),
     latitude                DECIMAL(10,8)    NOT NULL,
     longitude               DECIMAL(11,8)    NOT NULL,
     city                    VARCHAR(100)     NOT NULL,
-    recycle_address         VARCHAR(100)     NOT NULL,
+    recycle_address         VARCHAR(255)     NOT NULL,
     phone                   VARCHAR(30),
     is_active               BOOLEAN          NOT NULL DEFAULT TRUE, -- False when a location not part of CalRecycle data 
     source_updated_at       DATETIME         NULL, -- check if calRecycle provides this data
