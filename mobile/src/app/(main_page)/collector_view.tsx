@@ -1,7 +1,7 @@
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import {ScrollView, StyleSheet, Text, View,} from "react-native";
-import { styles } from "../shared/styles";
-import { Profile } from "../shared/components";
+import { styles } from "../../hooks/styles";
+import { Profile } from "../../components/profile";
 
 export default function CollectorView() {
   return (

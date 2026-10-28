@@ -1,6 +1,6 @@
 import { StyleSheet, View, Image, Text, ScrollView} from "react-native";
-import { styles } from "../shared/styles"
-import { Profile } from "../shared/components"
+import { styles } from "../../hooks/styles"
+import { Profile } from "../../components/profile"
 
 export default function CustomerView() {
   const posts: PostData[]  = [

@@ -1,5 +1,5 @@
 import { Image } from "expo-image";
-import {styles} from "./styles"
+import {styles} from "../hooks/styles"
 
 export function Profile() {
   return (
