@@ -1,9 +1,11 @@
-import { StyleSheet, View, Image, Text, ScrollView} from "react-native";
+import { useState } from "react";
+import { StyleSheet, View, Image, Text, ScrollView, Pressable } from "react-native";
 import { styles } from "../../hooks/styles"
 import { Profile } from "../../components/profile"
 
 export default function CustomerView() {
-  const posts: PostData[]  = [
+  const [activeTab, setActiveTab] = useState<"current" | "old">("current");
+  const oldPosts: PostData[] = [
     {
       post_id: 1,
       photo: "https://react.dev/images/docs/scientists/MK3eW3As.jpg",
@@ -15,12 +17,51 @@ export default function CustomerView() {
       delivery_instruction: "knock please",
     },
   ];
+
+  const currentPost: PostData = {
+    post_id: 3,
+    photo: "https://react.dev/images/docs/scientists/MK3eW3As.jpg",
+    delivery_instruction: "pickup outside",
+  };
+
+  const postsToDisplay = activeTab === "current" ? [currentPost] : oldPosts;
+
     return (
+
         <View style={styles.container}>
             <Profile />
-            <Text>Posted:</Text>
-            <ScrollView>
-              {posts.map((post) => (
+            <View style={customerStyles.TabRow}>
+              <Text style={customerStyles.Header}>My Posts</Text>
+              {/* tab for switching between current post and old posts */}
+              <View style={customerStyles.TabContainer}>
+                <Pressable
+                  style={[
+                    customerStyles.Tab,
+                    activeTab === "current" && customerStyles.ActiveCurrentTab,
+                  ]}
+                  onPress={() => setActiveTab("current")}
+                >
+                  <Text style={[ customerStyles.TabText,
+                    activeTab === "current" && customerStyles.ActiveTabText,
+                  ]}>Current</Text>
+                </Pressable>
+                <Pressable
+                  style={[
+                    customerStyles.Tab,
+                    activeTab === "old" && customerStyles.ActiveOldTab,
+                  ]}
+                  onPress={() => setActiveTab("old")}
+                >
+                  <Text style={[ customerStyles.TabText,
+                    activeTab === "old" && customerStyles.ActiveTabText,
+                  ]}>Archived</Text>
+                </Pressable>
+              </View>
+            </View>
+            
+            <ScrollView style={customerStyles.PostContainer}
+              showsVerticalScrollIndicator={false}>
+              {postsToDisplay.map((post) => (
                 <Post key={post.post_id} post={post} />
               ))}
             </ScrollView>
@@ -63,19 +104,101 @@ function Post({ post }: { post: PostData }) {
 }
 
 const customerStyles = StyleSheet.create({
-  PostFrame: {
-    height: 500,
+  Screen: {
+    backgroundColor: "#DCEEFF",
+  },
+
+  Header: {
+    marginBottom: 8,
+    fontSize: 26,
+    fontWeight: "700",
+    color: "#29445C",
+  },
+
+  TabRow: {
     width: "100%",
-    borderRadius: 20,
-    marginBottom: 40,
-    overflow: "hidden",
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    // borderWidth: 1,
+    borderBottomWidth: 2,
+    borderBottomColor: "#B7C9D8",
+    marginTop: 20,
+  },
+
+  TabContainer: {
+    flexDirection: "row",
+    alignSelf: "flex-end",
+    marginRight: "2.5%",
+    zIndex: 1,
+  },
+
+  Tab: {
+    minWidth: 100,
+    alignItems: "center",
+    paddingVertical: 11,
+    paddingHorizontal: 16,
+    marginLeft: 5,
+    borderTopLeftRadius: 14,
+    borderTopRightRadius: 14,
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    borderColor: "#B7C9D8",
+  },
+
+  ActiveCurrentTab: {
+    backgroundColor: "#FFF4C2",
+  },
+
+  ActiveOldTab: {
+    backgroundColor: "#DDF3D1",
+  },
+
+  TabText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#6B7780",
+  },
+
+  ActiveTabText: {
+    color: "#29445C",
+    fontWeight: "700",
+  },
+
+  PostContainer: {
+    width: "100%",
+    paddingTop: 10
+  },
+
+  PostContent: {
+    paddingTop: 16,
+    paddingBottom: 30,
+  },
+
+  PostFrame: {
+    width: "95%",
+    // minHeight: 300,
+    height: 500,
+    alignSelf: "center",
+    marginBottom: 20,
+    padding: 18,
+    borderRadius: 22,
     backgroundColor: "#FFFFFF",
-    padding: 20,
+
+    shadowColor: "#29445C",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
   },
 
   Row: {
     flexDirection: "row",
-    //alignItems: "center",
+    alignItems: "flex-start",
   },
 
   ImageContainer: {
@@ -87,30 +210,36 @@ const customerStyles = StyleSheet.create({
   PostImage: {
     width: "100%",
     height: "100%",
-    borderRadius: 10,
-  }, 
+    borderRadius: 16,
+  },
 
   InstructionBubble: {
     position: "absolute",
     right: -8,
-    bottom: -12,
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 15,
-    elevation: 3,
+    bottom: -10,
+    backgroundColor: "#FFF4C2",
+    paddingVertical: 7,
+    paddingHorizontal: 11,
+    borderRadius: 14,
+
     shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
 
   InstructionText: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "700",
+    color: "#5C5130",
   },
 
   PostText: {
-    marginLeft: 20,
+    flex: 1,
+    marginLeft: 18,
+    marginTop: 8,
     fontSize: 16,
+    fontWeight: "600",
+    color: "#29445C",
   },
 });
