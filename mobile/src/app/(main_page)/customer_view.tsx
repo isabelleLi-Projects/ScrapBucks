@@ -8,19 +8,23 @@ export default function CustomerView() {
   const oldPosts: PostData[] = [
     {
       post_id: 1,
-      photo: "https://react.dev/images/docs/scientists/MK3eW3As.jpg",
+      photos: [
+      "https://react.dev/images/docs/scientists/MK3eW3As.jpg",
+      "https://react.dev/images/docs/scientists/MK3eW3As.jpg",
+      "https://react.dev/images/docs/scientists/MK3eW3As.jpg",
+    ],
       delivery_instruction: "pickup outside",
     },
     {
       post_id: 2,
-      photo: "https://react.dev/images/docs/scientists/MK3eW3As.jpg",
+      photos: ["https://react.dev/images/docs/scientists/MK3eW3As.jpg"],
       delivery_instruction: "knock please",
     },
   ];
 
   const currentPost: PostData = {
     post_id: 3,
-    photo: "https://react.dev/images/docs/scientists/MK3eW3As.jpg",
+    photos: ["https://react.dev/images/docs/scientists/MK3eW3As.jpg"],
     delivery_instruction: "pickup outside",
   };
 
@@ -72,32 +76,97 @@ export default function CustomerView() {
 
 type PostData = {
   post_id: number;
-  photo: string;
+  photos: string[];
   delivery_instruction: "pickup outside" | "knock please";
 };
 
 function Post({ post }: { post: PostData }) {
+  const [imageIndex, setImageIndex] = useState(0);
+  
+  function showPreviousImage() {
+    setImageIndex((currentIndex) =>
+      currentIndex === 0
+        ? post.photos.length - 1
+        : currentIndex - 1
+    );
+  }
+
+  function showNextImage() {
+    setImageIndex((currentIndex) =>
+      currentIndex === post.photos.length - 1
+        ? 0
+        : currentIndex + 1
+    );
+  }
   return (
     <View style={customerStyles.PostFrame}>
-      <View style={customerStyles.Row}>
-        {/* Wrapper (image container) allows the bubble to be positioned over the image */}
-        <View style={customerStyles.ImageContainer}>
-          <Image
-            style={customerStyles.PostImage}
-            source={{ uri: post.photo }}
-            resizeMode="cover"
-          />
+      <Text style={customerStyles.PostTextHeading}>
+        Pickup information
+      </Text>
+      <Text style={customerStyles.PostTextBody}>
+        Number of cans (estimate)
+      </Text>
+      <Text style={customerStyles.PostTextBody}>
+        Price:
+      </Text>
+      <Text style={customerStyles.PostTextBody}>
+        Weight lb/kg: ...
+      </Text>
+      <Text style={customerStyles.PostTextBody}>
+        Description:
+      </Text>
+      <Text style={customerStyles.PostTextBody}>
+        {"\n"}Location:
+      </Text>
+      <Text style={customerStyles.PostTextBody}>
+        Pickup notes:
+      </Text>
+      <Text style={customerStyles.PostTextBody}>
+        Time available:
+      </Text>
 
-          <View style={customerStyles.InstructionBubble}>
-            <Text style={customerStyles.InstructionText}>
-              {post.delivery_instruction}
-            </Text>
-          </View>
+      <View style={customerStyles.ImageSection}>
+        <Image
+          style={customerStyles.PostImage}
+          source={{ uri: post.photos[imageIndex] }}
+          resizeMode="cover"
+        />
+
+        {post.photos.length > 1 && (
+          <>
+            <Pressable
+              style={[customerStyles.Arrow, customerStyles.LeftArrow]}
+              onPress={showPreviousImage}
+            >
+              <Text style={customerStyles.ArrowText}>‹</Text>
+            </Pressable>
+
+            <Pressable
+              style={[customerStyles.Arrow, customerStyles.RightArrow]}
+              onPress={showNextImage}
+            >
+              <Text style={customerStyles.ArrowText}>›</Text>
+            </Pressable>
+
+            <View style={customerStyles.Dots}>
+              {post.photos.map((_, index) => (
+                <View
+                  key={index}
+                  style={[
+                    customerStyles.Dot,
+                    index === imageIndex && customerStyles.ActiveDot,
+                  ]}
+                />
+              ))}
+            </View>
+          </>
+        )}
+
+        <View style={customerStyles.InstructionBubble}>
+          <Text style={customerStyles.InstructionText}>
+            {post.delivery_instruction}
+          </Text>
         </View>
-
-        <Text style={customerStyles.PostText}>
-          Post information
-        </Text>
       </View>
     </View>
   );
@@ -182,7 +251,7 @@ const customerStyles = StyleSheet.create({
     height: 500,
     alignSelf: "center",
     marginBottom: 20,
-    padding: 18,
+    padding: 25,
     borderRadius: 22,
     backgroundColor: "#FFFFFF",
 
@@ -201,10 +270,11 @@ const customerStyles = StyleSheet.create({
     alignItems: "flex-start",
   },
 
-  ImageContainer: {
-    width: "45%",
-    aspectRatio: 1,
+  ImageSection: {
+    width: "100%",
+    height: 150,
     position: "relative",
+    marginTop: "auto",
   },
 
   PostImage: {
@@ -234,12 +304,64 @@ const customerStyles = StyleSheet.create({
     color: "#5C5130",
   },
 
-  PostText: {
-    flex: 1,
-    marginLeft: 18,
-    marginTop: 8,
-    fontSize: 16,
+  PostTextHeading: {
+    fontSize: 18,
+    marginBottom: 7,
     fontWeight: "600",
     color: "#29445C",
   },
+  PostTextBody: {
+    fontSize: 16,
+    marginBottom: 4,
+    fontWeight: "400",
+    color: "#29445C",
+  },
+  Dots: {
+    position: "absolute",
+    bottom: 12,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    justifyContent: "center",
+  },
+
+  Dot: {
+    width: 8,
+    height: 8,
+    marginHorizontal: 4,
+    borderRadius: 4,
+    backgroundColor: "#FFFFFF",
+    opacity: 0.6,
+  },
+  ActiveDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#FFF4C2",
+    opacity: 1,
+  },
+  Arrow: {
+    position: "absolute",
+    top: "42%",
+    width: 42,
+    height: 42,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 21,
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
+    elevation: 3,
+  },
+  LeftArrow: {
+    left: 10,
+  },
+
+  RightArrow: {
+    right: 10,
+  },
+  ArrowText: {
+    fontSize: 34,
+    lineHeight: 36,
+    color: "#29445C",
+  },
+
 });
