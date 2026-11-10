@@ -14,11 +14,13 @@ export default function CustomerView() {
       "https://react.dev/images/docs/scientists/MK3eW3As.jpg",
     ],
       delivery_instruction: "pickup outside",
+      status: "pickedUp",
     },
     {
       post_id: 2,
       photos: ["https://react.dev/images/docs/scientists/MK3eW3As.jpg"],
       delivery_instruction: "knock please",
+      status: "findingDriver",
     },
   ];
 
@@ -26,6 +28,7 @@ export default function CustomerView() {
     post_id: 3,
     photos: ["https://react.dev/images/docs/scientists/MK3eW3As.jpg"],
     delivery_instruction: "pickup outside",
+    status: "driverAccepted",
   };
 
   const postsToDisplay = activeTab === "current" ? [currentPost] : oldPosts;
@@ -73,11 +76,13 @@ export default function CustomerView() {
         </View>
     );
 }
+type PickupStatus = "findingDriver" | "driverAccepted" | "pickedUp";
 
 type PostData = {
   post_id: number;
   photos: string[];
   delivery_instruction: "pickup outside" | "knock please";
+  status: PickupStatus;
 };
 
 function Post({ post }: { post: PostData }) {
@@ -168,6 +173,44 @@ function Post({ post }: { post: PostData }) {
           </Text>
         </View>
       </View>
+      <ProgressTracker status={post.status} />
+    </View>
+  );
+}
+
+function ProgressTracker({ status }: { status: PickupStatus }) {
+  const steps = [
+    { key: "findingDriver", label: "Finding driver" },
+    { key: "driverAccepted", label: "Driver accepted" },
+    { key: "pickedUp", label: "Picked up" },
+  ];
+
+  const currentStep = steps.findIndex((step) => step.key === status);
+
+  return (
+    <View style={customerStyles.ProgressTracker}>
+      {steps.map((step, index) => {
+        const isCompleted = index <= currentStep;
+        const lineIsCompleted = index < currentStep;
+
+        return (
+          <View style={customerStyles.ProgressStep} key={step.key}>
+            <View style={customerStyles.CircleAndLine}>
+              <View style={[customerStyles.ProgressCircle, isCompleted && customerStyles.CompletedCircle,]}>
+                {isCompleted}
+              </View>
+
+              {index < steps.length - 1 && (
+                <View style={[customerStyles.ProgressLine, lineIsCompleted && customerStyles.CompletedLine,]}/>
+              )}
+            </View>
+
+            <Text style={customerStyles.ProgressLabel}>
+              {step.label}
+            </Text>
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -274,7 +317,7 @@ const customerStyles = StyleSheet.create({
     width: "100%",
     height: 150,
     position: "relative",
-    marginTop: "auto",
+    marginTop: 10,
   },
 
   PostImage: {
@@ -363,5 +406,61 @@ const customerStyles = StyleSheet.create({
     lineHeight: 36,
     color: "#29445C",
   },
+  ProgressTracker: {
+  flexDirection: "row",
+  width: "100%",
+  marginTop: 20,
+},
+
+ProgressStep: {
+  flex: 1,
+  alignItems: "center",
+},
+
+CircleAndLine: {
+  marginLeft: 70,
+  width: "100%",
+  flexDirection: "row",
+  alignItems: "center",
+},
+
+ProgressCircle: {
+  width: 20,
+  height: 20,
+  alignItems: "center",
+  justifyContent: "center",
+  borderRadius: 13,
+  backgroundColor: "#D9E1E8",
+  borderWidth: 2,
+  borderColor: "#B7C9D8",
+},
+
+CompletedCircle: {
+  backgroundColor: "#DDF3D1",
+  borderColor: "#8DBF96",
+},
+
+// Checkmark: {
+//   fontSize: 14,
+//   fontWeight: "700",
+//   color: "#29445C",
+// },
+
+ProgressLine: {
+  flex: 1,
+  height: 3,
+  backgroundColor: "#D9E1E8",
+},
+
+CompletedLine: {
+  backgroundColor: "#8DBF96",
+},
+
+ProgressLabel: {
+  marginTop: 7,
+  fontSize: 11,
+  textAlign: "center",
+  color: "#526575",
+},
 
 });
