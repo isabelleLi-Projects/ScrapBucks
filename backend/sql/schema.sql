@@ -8,19 +8,25 @@ CREATE TABLE Users (
   email             VARCHAR(100)  NOT NULL UNIQUE,
   password_hash     VARCHAR(255)  NOT NULL,
   profile_photo     VARCHAR(100)  NOT NULL,
-  user_role         VARCHAR(20)   NOT NULL, -- collector or customer
   rating            DECIMAL(3,2)  NOT NULL,
 
-  CHECK (user_role IN ('collector', 'customer')),
   CHECK (rating BETWEEN 0.00 AND 5.00)
 );
 
 CREATE TABLE Posts (
-    post_id   INT AUTO_INCREMENT PRIMARY KEY,
-    num_bags         INT            NOT NULL, 
+    post_id   INT AUTO_INCREMENT PRIMARY KEY, 
     price            DECIMAL (10,2) NOT NULL,
-    pickup_location  VARCHAR(100)   NOT NULL,
-    photo            VARCHAR(100)   NOT NULL,
+    description      VARCHAR(1000)  NOT NULL,
+    
+    -- location
+    address_line      VARCHAR(255) NOT NULL,
+    city                VARCHAR(100) NOT NULL,
+    state               VARCHAR(50) NOT NULL,
+    zip_code             VARCHAR(10) NOT NULL,
+    latitude            DECIMAL(10, 8) NOT NULL,
+    longitude          DECIMAL(11, 8) NOT NULL,
+
+    pickup_notes     VARCHAR(300)   NOT NULL,
     delivery_instruction 
                     ENUM('pickup outside', 'knock please') NOT NULL,
     has_driver       BOOLEAN        NOT NULL DEFAULT FALSE,
@@ -40,6 +46,15 @@ CREATE TABLE TimeAvailable (
     start_time      TIME     NOT NULL,    
     end_time        TIME     NOT NULL,
     PRIMARY KEY (post_id, time_id),
+    FOREIGN KEY (post_id) REFERENCES Posts(post_id) ON DELETE CASCADE
+);
+
+-- Weak entity depends on Post
+CREATE TABLE PostPhotos (
+    post_id INT NOT NULL,
+    photo_order INT NOT NULL DEFAULT 0,
+    photo_url VARCHAR(2048) NOT NULL,
+    PRIMARY KEY (post_id, photo_order),
     FOREIGN KEY (post_id) REFERENCES Posts(post_id) ON DELETE CASCADE
 );
 
