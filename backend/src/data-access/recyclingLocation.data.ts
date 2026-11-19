@@ -23,6 +23,19 @@ export async function deactivateMissingLocations(syncStartedAt: Date): Promise<v
     await db.query<ResultSetHeader> (`
         UPDATE RecyclingLocations
         SET is_active = FALSE
-        WHERE last_synced_at < ? // finds locations who last synced at is older than current time
-    `)
+        WHERE last_synced_at < ? 
+    `)    // finds locations who last synced at is older than current time
+}
+
+//upsert = combines "update" and "insert" for the insert
+export async function upsertRecyclingLocation(location: RecyclingLocation): Promise<void> {
+    // update only if primary key exists 
+    const sql = 
+    `INSERT INTO RecyclingLocations(calrecycle_id, facility_name, zip_code, latitude, longitude, city, recycle_address, phone, is_active, source_updated_at, last_synced_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, NOW())
+    ON DUPLICATE KEY UPDATE facility_name = VALUES(facility_name), zip_code = VALUES(zip_code), latitude = VALUES(latitude), longitude = VALUES(longitude), city = VALUES(city), recycle_address = VALUES(recycle_address), phone = VALUES(phone)`
+    // replace the ? values
+    const values = [location.calrecycle_id,  location.facility_name, location.zip_code, location.latitude, location.longitude, location.city, location.recycle_address, location.phone ?? null, location.source_updated_at ?? null, ]
+    // waits to finish the insert 
+    await db.query<ResultSetHeader>(sql, values)
 }

@@ -74,7 +74,6 @@ CREATE TABLE RecyclingLocations (
     last_synced_at          DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP, -- when the system last checked CalRecycle
     created_at              DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP, 
     updated_at              DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP -- changes the time to the time when the row is updated
-    -- upsert = combines "update" and "insert" for the insert
 
 );
 
