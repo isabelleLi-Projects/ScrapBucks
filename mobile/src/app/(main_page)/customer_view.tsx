@@ -1,37 +1,44 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { StyleSheet, View, Image, Text, ScrollView, Pressable } from "react-native";
 import { styles } from "../../hooks/styles"
 import { Profile } from "../../components/profile"
+import { Post, PickupStatus, examplePosts } from "../../../../shared/types/post";
+
+//const API_URL = process.env.EXPO_PUBLIC_API_URL;
+//const API_URL = "http://localhost:3000";
+const API_URL = "http://10.250.100.12:3000"; // get ip with ipconfig getifaddr en0
 
 export default function CustomerView() {
+  const customerId = 3;
   const [activeTab, setActiveTab] = useState<"current" | "old">("current");
-  const oldPosts: PostData[] = [
-    {
-      post_id: 1,
-      photos: [
-      "https://react.dev/images/docs/scientists/MK3eW3As.jpg",
-      "https://react.dev/images/docs/scientists/MK3eW3As.jpg",
-      "https://react.dev/images/docs/scientists/MK3eW3As.jpg",
-    ],
-      delivery_instruction: "pickup outside",
-      status: "pickedUp",
-    },
-    {
-      post_id: 2,
-      photos: ["https://react.dev/images/docs/scientists/MK3eW3As.jpg"],
-      delivery_instruction: "knock please",
-      status: "findingDriver",
-    },
-  ];
+  const [posts, setPosts] = useState<Post[]>(examplePosts);
+  
+  useEffect(() => {
+  async function loadPosts() {
+    try {
+      const url = `${API_URL}/api/customers/${customerId}/posts`;
+      console.log("Fetching:", url);
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch posts");
+      }
 
-  const currentPost: PostData = {
-    post_id: 3,
-    photos: ["https://react.dev/images/docs/scientists/MK3eW3As.jpg"],
-    delivery_instruction: "pickup outside",
-    status: "driverAccepted",
-  };
+      const postsFromServer: Post[] = await response.json();
+      setPosts(postsFromServer);
 
-  const postsToDisplay = activeTab === "current" ? [currentPost] : oldPosts;
+    } catch (error) {
+      console.error("Error loading posts:", error);
+    }
+  }
+
+  loadPosts();
+}, [customerId]);
+
+  const postsToDisplay =
+    activeTab === "current"
+      ? posts.filter((post) => post.status !== "pickedUp")
+      : posts.filter((post) => post.status === "pickedUp");
 
     return (
 
@@ -69,23 +76,15 @@ export default function CustomerView() {
             <ScrollView style={customerStyles.PostContainer}
               showsVerticalScrollIndicator={false}>
               {postsToDisplay.map((post) => (
-                <Post key={post.post_id} post={post} />
+                <PostDisplay key={post.post_id} post={post} />
               ))}
             </ScrollView>
             
         </View>
     );
 }
-type PickupStatus = "findingDriver" | "driverAccepted" | "pickedUp";
 
-type PostData = {
-  post_id: number;
-  photos: string[];
-  delivery_instruction: "pickup outside" | "knock please";
-  status: PickupStatus;
-};
-
-function Post({ post }: { post: PostData }) {
+function PostDisplay({ post }: { post: Post }) {
   const [imageIndex, setImageIndex] = useState(0);
   
   function showPreviousImage() {
@@ -105,30 +104,33 @@ function Post({ post }: { post: PostData }) {
   }
   return (
     <View style={customerStyles.PostFrame}>
-      <Text style={customerStyles.PostTextHeading}>
+      <View style={customerStyles.PostTextFrame}>
+        <Text style={customerStyles.PostTextHeading}>
         Pickup information
-      </Text>
-      <Text style={customerStyles.PostTextBody}>
-        Number of cans (estimate)
-      </Text>
-      <Text style={customerStyles.PostTextBody}>
-        Price:
-      </Text>
-      <Text style={customerStyles.PostTextBody}>
-        Weight lb/kg: ...
-      </Text>
-      <Text style={customerStyles.PostTextBody}>
-        Description:
-      </Text>
-      <Text style={customerStyles.PostTextBody}>
-        {"\n"}Location:
-      </Text>
-      <Text style={customerStyles.PostTextBody}>
-        Pickup notes:
-      </Text>
-      <Text style={customerStyles.PostTextBody}>
-        Time available:
-      </Text>
+        </Text>
+        <Text style={customerStyles.PostTextBody}>
+          Price: ${post.price}
+        </Text>
+        <Text style={customerStyles.PostTextBody}>
+          Description: {post.description}
+        </Text>
+        <Text style={customerStyles.PostTextBody}>
+          {"\n"}Location: {post.pickup_location.address_line}, {post.pickup_location.city}
+        </Text>
+        <Text style={customerStyles.PostTextBody}>
+          Pickup notes: {post.pickup_notes}
+        </Text>
+
+        <Text style={customerStyles.PostTextBody}>
+          Time available:
+        </Text>
+        {post.time_slots.map((slot, index) => (
+        <Text key={index} style={customerStyles.PostTextBody}>
+          Day {slot.day_of_week}: {slot.start_time} - {slot.end_time}
+        </Text>
+        ))}
+
+      </View>
 
       <View style={customerStyles.ImageSection}>
         <Image
@@ -329,7 +331,7 @@ const customerStyles = StyleSheet.create({
   InstructionBubble: {
     position: "absolute",
     right: -8,
-    bottom: -10,
+    top: -10,
     backgroundColor: "#FFF4C2",
     paddingVertical: 7,
     paddingHorizontal: 11,
@@ -345,6 +347,9 @@ const customerStyles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
     color: "#5C5130",
+  },
+  PostTextFrame: {
+    height: "45%"
   },
 
   PostTextHeading: {
