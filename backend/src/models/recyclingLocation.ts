@@ -1,4 +1,5 @@
 
+// for scrapbucks databse
 export interface RecyclingLocation {
     recycling_location_id?: number;
     calrecycle_id: string;

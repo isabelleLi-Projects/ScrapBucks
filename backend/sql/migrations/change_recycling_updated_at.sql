@@ -1,0 +1,4 @@
+USE scrapbucks_db;
+ALTER TABLE RecyclingLocations
+MODIFY updated_at DATETIME NOT NULL
+DEFAULT CURRENT_TIMESTAMP;

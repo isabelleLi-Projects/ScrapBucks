@@ -69,16 +69,16 @@ CREATE TABLE DriverLocations (
 );
 
 CREATE TABLE RecyclingLocations (
-     -- database's internal ID
+     -- id scrapbucks database creates
     recycling_location_id   INT AUTO_INCREMENT PRIMARY KEY,
-    -- location's ID from CalRecycle
+    -- calRecycle's ID eperated with '|' and uppercase for consistency
     calrecycle_id           VARCHAR(100)       NOT NULL UNIQUE, 
     -- name of the CRV recycling place
     facility_name           VARCHAR(200)       NOT NULL, 
     
-    zip_code                CHAR(5)            NOT NULL,
-    CONSTRAINT check_5_digits
-        CHECK (zip_code REGEXP '^[0-9]{5}$'),
+    zip_code                VARCHAR(10)         NOT NULL,
+    CONSTRAINT check_us_zip
+        CHECK (zip_code REGEXP '^[0-9]{5}(-[0-9]{4})?$'),
     latitude                DECIMAL(10,8)    NOT NULL,
     longitude               DECIMAL(11,8)    NOT NULL,
     city                    VARCHAR(100)     NOT NULL,
