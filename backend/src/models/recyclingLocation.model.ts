@@ -1,5 +1,5 @@
 
-// for scrapbucks databse
+// for scrapbucks database and collector view
 export interface RecyclingLocation {
     recycling_location_id?: number;
     calrecycle_id: string;

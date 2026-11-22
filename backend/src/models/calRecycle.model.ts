@@ -2,7 +2,7 @@
 export interface CalRecycleGeometry {
     type: "Point";
   
-    // [longitude, latitude]
+    // GEOJSON uses [longitude, latitude]
     coordinates: [number, number];
   }
   

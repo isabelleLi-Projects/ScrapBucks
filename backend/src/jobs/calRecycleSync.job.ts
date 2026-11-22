@@ -13,10 +13,8 @@ export function startCalRecycleSyncJob() {
         }
     };
 
-    const test_time = "*/2 * * * *" // run every 2 minutes for testing purposes
+    const test_time = "*/1 * * * *" // run every minute for testing purposes
     const actual_time = "0 0 * * 0" // run every Sunday at midnight (0th minute, 0th hour(midnight) any day of the month, any month, 0th day of week (Sunday))
     cron.schedule(test_time,  syncCalRecycle, { timezone: "America/Los_Angeles" }); 
     console.log("CalRecycle synchronization job scheduled.");
-
-    
 }

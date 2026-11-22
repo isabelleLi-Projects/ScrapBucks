@@ -1,13 +1,12 @@
 import { RowDataPacket, ResultSetHeader } from "mysql2";
 import { db } from "../config/database";
-import { RecyclingLocation } from "../models/recyclingLocation";
-
+import { RecyclingLocation } from "../models/recyclingLocation.model";
 // imports typescript interface so the returned data has the correct structure
 // combines the fields in RecyclingLocation and RowDataPacket
 interface RecyclingLocationRow extends RecyclingLocation, RowDataPacket{}
 
 
-// returns an array of recycling locations
+// retrieves all saved data from the database
 export async function getActiveRecyclingLocations(): Promise<RecyclingLocation[]> {
     // wait for the query to finish based on the Promise
     const [rows] = await db.query<RecyclingLocationRow[]>(`
@@ -29,6 +28,7 @@ export async function deactivateMissingLocations(syncStartedAt: Date): Promise<v
 }
 
 //upsert = combines "update" and "insert" for the insert
+// used when syncing calRecycle data
 export async function upsertRecyclingLocation(location: RecyclingLocation): Promise<void> {
     // update only if primary key exists 
     const sql = 

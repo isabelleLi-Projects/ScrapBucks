@@ -1,6 +1,6 @@
 // create bounds for which locations customers can see
 // used when the user zooms in and out of the map
-function getMapBounds(region: {
+export function getMapBounds(region: {
     latitude: number;
     longitude: number;
     latitudeDelta: number;

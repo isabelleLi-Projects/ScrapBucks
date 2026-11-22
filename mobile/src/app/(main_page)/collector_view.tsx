@@ -1,9 +1,45 @@
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import {ScrollView, StyleSheet, Text, View,} from "react-native";
+import { useState, useEffect } from "react";
 import { styles } from "../../hooks/styles";
 import { Profile } from "../../components/profile";
+import { getMapBounds } from "../../utils/mapBounds"  
+import { RecyclingLocations } from "../../../../shared/types/recyclingLocations";
+
+
+const API_URL = "http://10.0.0.11:3000";
 
 export default function CollectorView() {
+  const [locations, setLocations] = useState<RecyclingLocations[]>([])
+  useEffect(() =>{
+    async function fetchLocations() {
+      try {
+        const url = `${API_URL}/recycling-locations`;
+        console.log("Fetching:", url);
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
+        const recycleLocationsData: RecyclingLocations[] = await response.json();
+        console.log("Locations received:", recycleLocationsData);
+        console.log("Location count:", recycleLocationsData.length);
+
+        recycleLocationsData.forEach((location) => {
+          console.log(
+            location.facility_name,
+            Number(location.latitude),
+            Number(location.longitude),
+          );
+        });
+        
+        setLocations(recycleLocationsData);
+      }catch(error) {
+        console.error("Failed to fetch recycling locations: ", error);
+      }
+    }
+    fetchLocations();
+  }, []);
+
   return (
     <View style={styles.container}>
       <Profile />
@@ -20,13 +56,17 @@ export default function CollectorView() {
             longitudeDelta: 0.05,
           }}
         >
-          <Marker
-            coordinate={{
-              latitude: 37.3352,
-              longitude: -121.8811,
-            }}
-            title="Pickup location"
-          />
+          {locations.map((location) => (
+            <Marker
+              key={location.recycling_location_id ?? location.calrecycle_id}
+              coordinate={{
+                latitude: Number(location.latitude),
+                longitude: Number(location.longitude),
+              }}
+              title={location.facility_name}
+              description={`${location.recycle_address}, ${location.city}, ${location.zip_code}`}
+            />
+          ))}
         </MapView>
       </View>
 

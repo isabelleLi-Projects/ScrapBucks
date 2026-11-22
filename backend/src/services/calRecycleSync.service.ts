@@ -1,9 +1,8 @@
 import dotenv from "dotenv";
 dotenv.config({ override: true });
 import { upsertRecyclingLocation, deactivateMissingLocations } from "../data-access/recyclingLocation.data";
+import { RecyclingLocation } from "../models/recyclingLocation.model";
 import { CalRecycleFeature, CalRecycleResponse } from "../models/calRecycle.model";
-import { RecyclingLocation } from "../models/recyclingLocation";
-// import { db } from "../config/database";
 import { startCalRecycleSyncJob } from "../jobs/calRecycleSync.job";
 
 // updates the database
@@ -48,7 +47,7 @@ export async function synchronizeCalRecycleCRVLocations(): Promise<void> {
         const properties = feature.properties;
         const [source_longitude, source_latitude] = feature.geometry.coordinates;
         const latitude = Number(source_latitude.toFixed(8)); //always 8 decimal places
-        const longitude = Number(source_latitude.toFixed(8));
+        const longitude = Number(source_longitude.toFixed(8));
         // format into database attributes
         return {
             calrecycle_id: [properties.Name.trim(), properties.Address.trim(), properties.City.trim(), properties.PostalCode,].join('|').toUpperCase(),
@@ -89,6 +88,5 @@ export async function synchronizeCalRecycleCRVLocations(): Promise<void> {
     }   
 }
 
-// test the cron job (undo the comment below but if'u run the testRecyclingSyncData.ts then u won't be able to reach the finally block)
-startCalRecycleSyncJob()
+
 
