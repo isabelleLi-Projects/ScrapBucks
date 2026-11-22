@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { StyleSheet, View, Image, Text, ScrollView, Pressable } from "react-native";
 import { styles } from "../../hooks/styles"
 import { Profile } from "../../components/profile"
