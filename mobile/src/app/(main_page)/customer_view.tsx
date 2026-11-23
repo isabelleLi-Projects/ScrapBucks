@@ -2,16 +2,17 @@ import { useEffect, useState, useRef } from "react";
 import { StyleSheet, View, Image, Text, ScrollView, Pressable } from "react-native";
 import { styles } from "../../hooks/styles"
 import { Profile } from "../../components/profile"
-import { Post, PickupStatus, examplePosts } from "../../../../shared/types/post";
+import { Post, PickupStatus } from "../../../../shared/types/post";
+import { Picker } from "@react-native-picker/picker";
 
 //const API_URL = process.env.EXPO_PUBLIC_API_URL;
 //const API_URL = "http://localhost:3000";
 const API_URL = "http://10.250.100.12:3000"; // get ip with ipconfig getifaddr en0
 
 export default function CustomerView() {
-  const customerId = 3;
+  const customerId = 1;
   const [activeTab, setActiveTab] = useState<"current" | "old">("current");
-  const [posts, setPosts] = useState<Post[]>(examplePosts);
+  const [posts, setPosts] = useState<Post[]>([]);
   
   useEffect(() => {
   async function loadPosts() {
@@ -84,6 +85,8 @@ export default function CustomerView() {
     );
 }
 
+const dayNames = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+
 function PostDisplay({ post }: { post: Post }) {
   const [imageIndex, setImageIndex] = useState(0);
   
@@ -102,6 +105,13 @@ function PostDisplay({ post }: { post: Post }) {
         : currentIndex + 1
     );
   }
+
+  const today = new Date().getDay();
+  const [selectedDay, setSelectedDay] = useState(today);
+  const selectedTimeSlots = post.time_slots.filter(
+    (slot) => slot.day_of_week === selectedDay
+  );
+
   return (
     <View style={customerStyles.PostFrame}>
       <View style={customerStyles.PostTextFrame}>
@@ -124,12 +134,35 @@ function PostDisplay({ post }: { post: Post }) {
         <Text style={customerStyles.PostTextBody}>
           Time available:
         </Text>
-        {post.time_slots.map((slot, index) => (
-        <Text key={index} style={customerStyles.PostTextBody}>
-          Day {slot.day_of_week}: {slot.start_time} - {slot.end_time}
-        </Text>
-        ))}
+        <View style={customerStyles.PickerContainer}>
+          <Picker
+            selectedValue={selectedDay}
+            onValueChange={(newDay) => setSelectedDay(Number(newDay))}
+          >
+            {dayNames.map((day, index) => (
+              <Picker.Item
+                key={day}
+                label={day}
+                value={index}
+              />
+            ))}
+          </Picker>
+        </View>
 
+        {selectedTimeSlots.length > 0 ? (
+          selectedTimeSlots.map((slot, index) => (
+            <Text
+              key={index}
+              style={customerStyles.PostTextBody}
+            >
+              {slot.start_time} - {slot.end_time}
+            </Text>
+          ))
+        ) : (
+          <Text style={customerStyles.PostTextBody}>
+            No pickup times available on {dayNames[selectedDay]}.
+          </Text>
+        )}
       </View>
 
       <View style={customerStyles.ImageSection}>
@@ -467,5 +500,12 @@ ProgressLabel: {
   textAlign: "center",
   color: "#526575",
 },
+PickerContainer: {
+  width: "100%",
+  height: 10,
+  marginVertical: 5,
+  borderRadius: 10,
+  backgroundColor: "#DCEEFF",
+}
 
 });
