@@ -89,31 +89,31 @@ VALUES
 (37.33500000, -121.88400000, 2),
 (37.35000000, -121.95000000, 2);
 
--- Recycling locations
-INSERT INTO RecyclingLocations
-(calrecycle_id, facility_name, zip_code, latitude, longitude,
- city, recycle_address, phone)
-VALUES
-(
-  'CRV-001',
-  'San Jose Recycling Center',
-  '95112',
-  37.34200000,
-  -121.89500000,
-  'San Jose',
-  '100 Recycling Way',
-  '408-555-0100'
-),
-(
-  'CRV-002',
-  'Santa Clara Recycling Center',
-  '95050',
-  37.35400000,
-  -121.95500000,
-  'Santa Clara',
-  '200 Green Street',
-  '408-555-0110'
-);
+-- -- Recycling locations
+-- INSERT INTO RecyclingLocations
+-- (calrecycle_id, facility_name, zip_code, latitude, longitude,
+--  city, recycle_address, phone)
+-- VALUES
+-- (
+--   'CRV-001',
+--   'San Jose Recycling Center',
+--   '95112',
+--   37.34200000,
+--   -121.89500000,
+--   'San Jose',
+--   '100 Recycling Way',
+--   '408-555-0100'
+-- ),
+-- (
+--   'CRV-002',
+--   'Santa Clara Recycling Center',
+--   '95050',
+--   37.35400000,
+--   -121.95500000,
+--   'Santa Clara',
+--   '200 Green Street',
+--   '408-555-0110'
+-- );
 
 -- Reviews
 INSERT INTO Reviews
