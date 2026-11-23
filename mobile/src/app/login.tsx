@@ -1,14 +1,7 @@
-import { useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  useWindowDimensions
-} from 'react-native';
+import { useState, useEffect, use } from 'react';
+import { Button, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions} from 'react-native';
+
+
 
 export default function LoginScreen() {
   const {width, height} = useWindowDimensions(); // automatically measures the app window 
@@ -26,13 +19,29 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState('');
 
-  function handleSignIn() {
-    if (!email || !password) {
-      setMessage('Please enter your email and password.');
-      return;
-    }
+  const API_URL = "http://10.0.0.11:3000";
 
-    setMessage('Signed in successfully.');
+  const handleLogin = async(): Promise<void> => {
+    try {
+      const url = `${API_URL}/auth/login`;
+
+      const response = await fetch(url, {
+        method: "POST", // inserting data
+        headers: {
+          "Content-Type": "application/json" // data is coming in as json
+        },
+        body: JSON.stringify({email, password}),
+      });
+      const userInformationData = await response.json();
+
+      if (!response.ok) {
+        alert(userInformationData.message || "Login failed"); // shows user pop up message
+        return;
+      }
+      alert((`Welcome, ${userInformationData.user.displayName}`));
+    }catch (error) {
+      console.error("Error loggin in: ", message)
+    }
   }
 
   return (
@@ -114,9 +123,10 @@ export default function LoginScreen() {
               </Pressable>
             </View>
 
-            <Pressable style={styles.signInButton} onPress={handleSignIn}>
-              <Text style={styles.signInText}>Sign In</Text>
+            <Pressable style={styles.signInButton} onPress={handleLogin}>
+              <Text style={styles.signInText}>Log In</Text>
             </Pressable>
+            
 
             {message ? <Text style={styles.message}>{message}</Text> : null}
           </View>
