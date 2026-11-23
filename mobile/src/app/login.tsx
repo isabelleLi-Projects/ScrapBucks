@@ -33,6 +33,8 @@ export default function LoginScreen() {
         body: JSON.stringify({email, password}),
       });
       const userInformationData = await response.json();
+      console.log(userInformationData.message);
+      console.log(userInformationData.user)
 
       if (!response.ok) {
         alert(userInformationData.message || "Login failed"); // shows user pop up message

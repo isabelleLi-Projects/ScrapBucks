@@ -3,7 +3,7 @@ dotenv.config({ override: true });
 import { upsertRecyclingLocation, deactivateMissingLocations } from "../data-access/recyclingLocation.data";
 import { RecyclingLocation } from "../models/recyclingLocation.model";
 import { CalRecycleFeature, CalRecycleResponse } from "../models/calRecycle.model";
-import { startCalRecycleSyncJob } from "../jobs/calRecycleSync.job";
+// import { startCalRecycleSyncJob } from "../jobs/calRecycleSync.job";
 
 // updates the database
 export async function synchronizeCalRecycleCRVLocations(): Promise<void> {

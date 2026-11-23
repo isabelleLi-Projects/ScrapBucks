@@ -7,7 +7,8 @@ import { Dropdown } from "react-native-element-dropdown";
 
 //const API_URL = process.env.EXPO_PUBLIC_API_URL;
 //const API_URL = "http://localhost:3000";
-const API_URL = "http://10.1.10.149:3000"; // get ip with ipconfig getifaddr en0
+// const API_URL = "http://10.1.10.149:3000"; // get ip with ipconfig getifaddr en0
+const API_URL = "http://10.0.0.11:3000"
 
 export default function CustomerView() {
   const customerId = 1;
