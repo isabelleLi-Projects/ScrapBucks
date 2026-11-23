@@ -1,13 +1,13 @@
 import { useEffect, useState, useRef } from "react";
-import { StyleSheet, View, Image, Text, ScrollView, Pressable } from "react-native";
+import { StyleSheet, View, Image, Text, ScrollView, Pressable, Modal } from "react-native";
 import { styles } from "../../hooks/styles"
 import { Profile } from "../../components/profile"
 import { Post, PickupStatus } from "../../../../shared/types/post";
-import { Picker } from "@react-native-picker/picker";
+import { Dropdown } from "react-native-element-dropdown";
 
 //const API_URL = process.env.EXPO_PUBLIC_API_URL;
 //const API_URL = "http://localhost:3000";
-const API_URL = "http://10.250.100.12:3000"; // get ip with ipconfig getifaddr en0
+const API_URL = "http://10.1.10.149:3000"; // get ip with ipconfig getifaddr en0
 
 export default function CustomerView() {
   const customerId = 1;
@@ -85,7 +85,15 @@ export default function CustomerView() {
     );
 }
 
-const dayNames = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const days = [
+  { label: "Monday", value: 1 },
+  { label: "Tuesday", value: 2 },
+  { label: "Wednesday", value: 3 },
+  { label: "Thursday", value: 4 },
+  { label: "Friday", value: 5 },
+  { label: "Saturday", value: 6 },
+  { label: "Sunday", value: 7 },
+];
 
 function PostDisplay({ post }: { post: Post }) {
   const [imageIndex, setImageIndex] = useState(0);
@@ -106,11 +114,12 @@ function PostDisplay({ post }: { post: Post }) {
     );
   }
 
-  const today = new Date().getDay();
+  const javascriptDay = new Date().getDay();
+  const today = javascriptDay === 0 ? 7 : javascriptDay;
   const [selectedDay, setSelectedDay] = useState(today);
-  const selectedTimeSlots = post.time_slots.filter(
-    (slot) => slot.day_of_week === selectedDay
-  );
+  const selectedDayName = days.find((day) => day.value === selectedDay)?.label ?? "Select a day";
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const selectedTimeSlots = post.time_slots.filter((slot) => slot.day_of_week === selectedDay);
 
   return (
     <View style={customerStyles.PostFrame}>
@@ -118,6 +127,7 @@ function PostDisplay({ post }: { post: Post }) {
         <Text style={customerStyles.PostTextHeading}>
         Pickup information
         </Text>
+        <ScrollView showsVerticalScrollIndicator={false}>
         <Text style={customerStyles.PostTextBody}>
           Price: ${post.price}
         </Text>
@@ -131,38 +141,38 @@ function PostDisplay({ post }: { post: Post }) {
           Pickup notes: {post.pickup_notes}
         </Text>
 
-        <Text style={customerStyles.PostTextBody}>
-          Time available:
-        </Text>
-        <View style={customerStyles.PickerContainer}>
-          <Picker
-            selectedValue={selectedDay}
-            onValueChange={(newDay) => setSelectedDay(Number(newDay))}
-          >
-            {dayNames.map((day, index) => (
-              <Picker.Item
-                key={day}
-                label={day}
-                value={index}
-              />
-            ))}
-          </Picker>
-        </View>
+        <View style={customerStyles.TimeHeader}>
+            <Text style={customerStyles.PostTextBody}>Pickup times:</Text>
 
-        {selectedTimeSlots.length > 0 ? (
-          selectedTimeSlots.map((slot, index) => (
-            <Text
-              key={index}
-              style={customerStyles.PostTextBody}
-            >
-              {slot.start_time} - {slot.end_time}
+            <Dropdown
+              style={customerStyles.Dropdown}
+              containerStyle={customerStyles.DropdownMenu}
+              itemContainerStyle={customerStyles.DropdownItem}
+              itemTextStyle={customerStyles.DropdownText}
+              data={days}
+              labelField="label"
+              valueField="value"
+              value={selectedDay}
+              onChange={(item) => {
+                setSelectedDay(item.value);
+              }}
+              placeholder="Select a day"
+              maxHeight={200}
+              selectedTextStyle={customerStyles.DropdownText}
+              placeholderStyle={customerStyles.DropdownText}
+            />
+          </View>
+          {selectedTimeSlots.length > 0 ? (selectedTimeSlots.map((slot, index) => (
+              <Text key={index} style={customerStyles.PostTextBody}>
+                {formatTime(slot.start_time)} -{" "}{formatTime(slot.end_time)}
+              </Text>
+            ))
+          ) : (
+            <Text style={customerStyles.PostTextBody}>
+              No pickup times available.
             </Text>
-          ))
-        ) : (
-          <Text style={customerStyles.PostTextBody}>
-            No pickup times available on {dayNames[selectedDay]}.
-          </Text>
-        )}
+          )}
+        </ScrollView>
       </View>
 
       <View style={customerStyles.ImageSection}>
@@ -211,6 +221,15 @@ function PostDisplay({ post }: { post: Post }) {
       <ProgressTracker status={post.status} />
     </View>
   );
+}
+
+function formatTime(time: string) {
+  const [hours, minutes] = time.split(":").map(Number);
+
+  const period = hours >= 12 ? "PM" : "AM";
+  const hour = hours % 12 || 12;
+
+  return `${hour}:${String(minutes).padStart(2, "0")} ${period}`;
 }
 
 function ProgressTracker({ status }: { status: PickupStatus }) {
@@ -315,7 +334,7 @@ const customerStyles = StyleSheet.create({
 
   PostContainer: {
     width: "100%",
-    paddingTop: 10
+    paddingTop: 10,
   },
 
   PostContent: {
@@ -382,7 +401,7 @@ const customerStyles = StyleSheet.create({
     color: "#5C5130",
   },
   PostTextFrame: {
-    height: "45%"
+    height: "50%"
   },
 
   PostTextHeading: {
@@ -392,7 +411,7 @@ const customerStyles = StyleSheet.create({
     color: "#29445C",
   },
   PostTextBody: {
-    fontSize: 16,
+    fontSize: 15,
     marginBottom: 4,
     fontWeight: "400",
     color: "#29445C",
@@ -500,12 +519,43 @@ ProgressLabel: {
   textAlign: "center",
   color: "#526575",
 },
-PickerContainer: {
+TimeHeader: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
   width: "100%",
-  height: 10,
-  marginVertical: 5,
+  marginVertical: 8,
+},
+
+Dropdown: {
+  width: 145,
+  height: 30,
+  paddingHorizontal: 12,
   borderRadius: 10,
+  borderWidth: 1,
+  borderColor: "#B7C9D8",
   backgroundColor: "#DCEEFF",
-}
+},
+
+DropdownMenu: {
+  borderRadius: 10,
+  backgroundColor: "#FFFFFF",
+  borderWidth: 1,
+  borderColor: "#B7C9D8",
+},
+DropdownItem: {
+  height: 50,
+  paddingVertical: 0,
+  justifyContent: "center",
+},
+DropdownItemText: {
+  fontSize: 14,
+  lineHeight: 14,
+  color: "#29445C",
+},
+DropdownText: {
+  fontSize: 14,
+  color: "#29445C",
+},
 
 });
