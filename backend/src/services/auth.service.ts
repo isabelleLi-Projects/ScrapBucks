@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { db } from "../config/database";
 import { SingleUser } from "../models/userRow";
+import bcrypt from "bcrypt";
 
 @Injectable()
 export class AuthService {
@@ -18,8 +19,9 @@ export class AuthService {
 
         const user = users[0];
 
-        // need to update for the actual password hash later
-        if (password !== user.password_hash) {
+        const isPassword = await bcrypt.compare(password, user.password_hash);
+
+        if (!isPassword) {
             throw new UnauthorizedException("Email or password is invalid")
         }
         return {

@@ -4,9 +4,9 @@ USE scrapbucks_db;
 INSERT INTO Users
 (display_name, email, password_hash, profile_photo, rating)
 VALUES
-('Jessica Tan', 'jessica@example.com', 'test-hash-1', 'jessica.jpg', 5.00),
-('Alex Chen', 'alex@example.com', 'test-hash-2', 'alex.jpg', 4.50),
-('Jordan Kim', 'jordan@example.com', 'test-hash-3', 'jordan.jpg', 4.75);
+('Jessica Tan', 'jessica@example.com', '$2b$10$UR9wfLsnwybgITnlLAzD.O5ORLUpv2N6wXQDnDuaPec8VtwOdIwha', 'jessica.jpg', 5.00),
+('Alex Chen', 'alex@example.com', '$2b$10$xQjV9uusbyH0vtmHfN91Ae0cNGfO46.mw8v//R2SSswRNbNxzgpWW', 'alex.jpg', 4.50),
+('Jordan Kim', 'jordan@example.com', '$2b$10$z0hGPCPLKM/sVlc3bSkIb.5vrYTeBn.xbN0ZEtmkC/MLC56gl5Wu.', 'jordan.jpg', 4.75);
 
 -- Posts
 INSERT INTO Posts

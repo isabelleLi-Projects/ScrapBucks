@@ -1,6 +1,6 @@
 import { useState, useEffect, use } from 'react';
-import { Button, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions} from 'react-native';
-
+import { Image, Button, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions} from 'react-native';
+import {useRouter} from "expo-router";
 
 
 export default function LoginScreen() {
@@ -18,8 +18,10 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState('');
+  const [selectedRole, setSelectedRole] = useState<"customer" | "collector"> ("customer");
 
   const API_URL = "http://10.0.0.11:3000";
+  const router = useRouter();
 
   const handleLogin = async(): Promise<void> => {
     try {
@@ -40,7 +42,12 @@ export default function LoginScreen() {
         alert(userInformationData.message || "Login failed"); // shows user pop up message
         return;
       }
-      alert((`Welcome, ${userInformationData.user.displayName}`));
+      if (selectedRole == "customer") {
+        router.replace("/customer_view")
+      }else {
+        router.replace("/collector_view")
+      }
+      // alert((`Welcome, ${userInformationData.user.displayName}`));
     }catch (error) {
       console.error("Error loggin in: ", message)
     }
@@ -67,7 +74,10 @@ export default function LoginScreen() {
           ]}
         >
           <View style={styles.logo}>
-            <Text style={styles.logoText}>ϟ</Text>
+            <Image 
+              source={require('../../assets/images/scrapbucks-logo.png')} 
+              style={styles.logo} 
+            />
           </View>
           <Text
             style={[
@@ -80,7 +90,7 @@ export default function LoginScreen() {
           >
             Welcome back
           </Text>
-          <Text style={styles.subtitle}>Sign in to continue</Text>
+          <Text style={styles.subtitle}>Log In to continue</Text>
 
           <View style={styles.form}>
             <Text style={styles.label}>Email</Text>
@@ -105,6 +115,8 @@ export default function LoginScreen() {
               </Pressable>
             </View>
 
+           
+
             <View style={styles.inputContainer}>
               <Text style={styles.inputIcon}>⌑</Text>
               <TextInput
@@ -124,6 +136,28 @@ export default function LoginScreen() {
                 <Text style={styles.eyeText}>{showPassword ? '◉' : '◎'}</Text>
               </Pressable>
             </View>
+            
+            <Text style={styles.roleLabel}> Choose Role: </Text>
+            <View style={styles.roleSelector}>
+              <Pressable 
+                style={[styles.roleOption, selectedRole === "customer" && styles.selectedRole]} 
+                onPress={() => setSelectedRole('customer')}
+              >
+                <Text style={[styles.roleText, selectedRole === "customer" && styles.selectedRoleText]}>
+                  Customer
+                </Text>
+              </Pressable>
+              <Pressable 
+                style={[styles.roleOption, selectedRole === "collector" && styles.selectedRole]} 
+                onPress={() => setSelectedRole('collector')}
+              >
+                <Text style={[styles.roleText, selectedRole === "collector" && styles.selectedRoleText]}>
+                  Collector
+                </Text>
+              </Pressable>
+             
+            </View>
+
 
             <Pressable style={styles.signInButton} onPress={handleLogin}>
               <Text style={styles.signInText}>Log In</Text>
@@ -133,6 +167,7 @@ export default function LoginScreen() {
             {message ? <Text style={styles.message}>{message}</Text> : null}
           </View>
 
+          
           <View style={styles.dividerRow}>
             <View style={styles.divider} />
             <Text style={styles.orText}>or</Text>
@@ -227,15 +262,15 @@ const createStyles = (s: (value: number) => number) =>
     backgroundColor: '#d9f4d8',
   },
   logo: {
-    width: s(40),
-    height: s(40),
+    width: s(80),
+    height: s(80),
     alignSelf: 'center',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: s(20),
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
+    marginBottom: s(10),
     borderRadius: s(22),
-    backgroundColor: '#3d83f3',
   },
+
   logoText: {
     color: '#ffffff',
     fontSize: s(31),
@@ -399,5 +434,45 @@ const createStyles = (s: (value: number) => number) =>
     color: '#30256b',
     fontSize: s(20),
     fontWeight: '700',
+  },
+
+  roleLabel: {
+    marginTop: s(18),
+    marginBottom: s(8),
+    color: '#30256b',
+    fontSize: s(16),
+    fontWeight: '500',
+  },
+  
+  roleSelector: {
+    width: '100%',
+    height: s(47),
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: s(4),
+    borderRadius: s(24),
+    backgroundColor: '#d9dfe5',
+  },
+  
+  roleOption: {
+    flex: 1,
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: s(21),
+  },
+  
+  selectedRole: {
+    backgroundColor: '#30256b',
+  },
+  
+  roleText: {
+    color: '#68758b',
+    fontSize: s(16),
+    fontWeight: '600',
+  },
+  
+  selectedRoleText: {
+    color: '#ffffff',
   },
 });
