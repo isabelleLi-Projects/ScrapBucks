@@ -16,9 +16,11 @@ export default function CollectorView() {
   const mapRef = useRef<MapView | null>(null);
   const [visibleLocations, setVisibleLocations] = useState<RecyclingLocations[]>([])
   const [userRegion, setUserRegion] = useState<Region | null>(null);
+  const [hasLocationPermission, setHasLocationPermission] = useState<boolean | null>(null);
   const DEFAULT_REGION: Region = {
-    latitude: 37.3352,
-    longitude: -121.8811,
+    // 93307 area code (has most recycling locations)
+    latitude: 35.294058225349104,
+    longitude: -118.9755342951712,
     latitudeDelta: 0.05,
     longitudeDelta: 0.05,
   };
@@ -30,11 +32,10 @@ export default function CollectorView() {
     { label: "3 miles", miles: 3 },
   ];
   const [selectedRadius, setSelectedRadius] = useState(DEFAULT_RADIUS_MILES); 
-  const [radiusMenuOpen, setRadiusMenuOpen] = useState(false);
-  const selectedOption = radiusOptions.find((option) => option.miles === selectedRadius);
   const [distanceModalVisible, setDistanceModalVisible] = useState(false);
   const [pendingRadius, setPendingRadius] = useState(selectedRadius);
   const mapRegion = userRegion ?? DEFAULT_REGION;
+  const locationLabel = hasLocationPermission === true ? "your location" : "bakersfield default area";
 
   
   useEffect(() =>{
@@ -70,9 +71,13 @@ export default function CollectorView() {
       }
 
       const { status } = await Location.requestForegroundPermissionsAsync(); // phone's popup for location
+      if (status === "granted"){
+        setHasLocationPermission(true); 
+      }
       if (status !== "granted"){
         console.log("Location permission denied");
         setUserRegion(DEFAULT_REGION);
+        setHasLocationPermission(false);
         return; 
       }
       const userLocation = await Location.getCurrentPositionAsync({accuracy : Location.Accuracy.Low})
@@ -108,8 +113,8 @@ export default function CollectorView() {
             }}
           >
             <Text style={collectorStyles.radiusText}>
-              Recycling locations within{" "}
-              {selectedRadius.toFixed(1)} miles
+              Recycling Locations Distance:
+              {/* Find recycling locations: {selectedRadius.toFixed(1)} miles of {locationLabel} */}
             </Text>
             <Text style={collectorStyles.chevron}>⌄</Text>
           </Pressable>
@@ -219,8 +224,8 @@ export default function CollectorView() {
             style={collectorStyles.map}
             initialRegion={mapRegion}
             showsUserLocation={true}
-            
           >
+  
             {visibleLocations.map((location) => (
               <Marker
                 
@@ -234,8 +239,13 @@ export default function CollectorView() {
               />
             ))}
           </MapView>
+          <Text style={collectorStyles.radiusText}> 
+              Recycling Locations {selectedRadius.toFixed(1)} miles of {locationLabel}
+          </Text>
     </View>
 
+      
+    
     <Text style={collectorStyles.title}>Accepted Pickups</Text>
       <View style={collectorStyles.pickupFrame}>
           <ScrollView>
@@ -283,14 +293,11 @@ export default function CollectorView() {
     }
   }
   function showNearbyLocations(radiusMiles: number) {
-    if(!userRegion) {
-      console.log("Actual user location is unavailable");
-      return;
-    }
+    const searchCenter = userRegion ?? DEFAULT_REGION;
     const nearbyLocations = locations.filter((location) => {
       const distance = distanceInMiles(
-        userRegion.latitude,
-        userRegion.longitude,
+        searchCenter.latitude,
+        searchCenter.longitude,
         Number(location.latitude), //Recycling Locations's latitude
         Number(location.longitude), //Recycling Locations's longitude
       );
