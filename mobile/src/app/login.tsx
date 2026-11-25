@@ -1,4 +1,4 @@
-import { useState, useEffect, use } from 'react';
+import { useState } from 'react';
 import { Image, Button, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions, TouchableWithoutFeedback, Keyboard, ScrollView} from 'react-native';
 import {useRouter} from "expo-router";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
@@ -227,7 +227,7 @@ export default function LoginScreen() {
                 </View>
 
 
-                <Pressable style={styles.signInButton} onPress={handleLogin}>
+                <Pressable style={styles.logInButton} onPress={handleLogin}>
                   <Text style={styles.signInText}>Log In</Text>
                 </Pressable>
                 
@@ -397,7 +397,7 @@ const createStyles = (s: (value: number) => number) =>
   //   textAlign: 'center',
   // },
   inputBottomSpace: {
-    marginBottom: s(18),
+    marginBottom: s(14),
   },
   input: {
     flex: 1,
@@ -426,7 +426,7 @@ const createStyles = (s: (value: number) => number) =>
     fontSize: s(15),
     fontWeight: '700'
   },
-  signInButton: {
+  logInButton: {
     height: s(47),
     alignItems: 'center',
     justifyContent: 'center',
@@ -517,7 +517,7 @@ const createStyles = (s: (value: number) => number) =>
   signupRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: s(40),
+    marginTop: s(30),
   },
   signupText: {
     color: '#30256b',

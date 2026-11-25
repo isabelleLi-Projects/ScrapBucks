@@ -1,4 +1,4 @@
-import { useState, useEffect, use } from 'react';
+import { useState} from 'react';
 import { Image, Button, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions, TouchableWithoutFeedback, Keyboard, ScrollView} from 'react-native';
 import {useRouter} from "expo-router";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
@@ -374,7 +374,6 @@ const createStyles = (s: (value: number) => number) =>
       borderColor: '#d9dfe5',
       borderRadius: s(14),
       backgroundColor: '#fbfbfc',
-      marginBottom: s(0),
     },
     // inputIcon: {
     //   width: s(25),
