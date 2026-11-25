@@ -167,10 +167,10 @@ export default function LoginScreen() {
                     ) : null}
                 <View style={styles.passwordHeader}>
                   <Text style={styles.label}>Password</Text>
-                  <Pressable onPress={() => setPasswordMessage('Password reset selected.')}>
+                  {/* need to implement the Forgot Password? still */}
+                  <Pressable onPress={() => setPasswordMessage('Password reset selected.')}> 
                     <Text style={styles.forgotPassword}>Forgot password?</Text>
                   </Pressable>
-                  
                 </View>
                 <View style={[styles.inputContainer, 
                     passwordMessage ? styles.inputContainerError : styles.inputBottomSpace,]}>
@@ -180,7 +180,7 @@ export default function LoginScreen() {
                       placeholder="At least 8 characters"
                       placeholderTextColor="#9da7b7"
                       secureTextEntry={!showPassword}
-                      autoComplete="new-password"
+                      autoComplete="password"
                       value={password}
                       onChangeText={(text) => {
                         setPassword(text);
@@ -574,21 +574,13 @@ const createStyles = (s: (value: number) => number) =>
     backgroundColor: 'transparent',
     zIndex: 1,
   },
-  inputErrorMessage: {
-    marginTop: s(12),
-    color: '#f51639',
-    fontSize: s(13),
-    textAlign: 'left',
-    fontWeight: '500',
-  },
+  
   inputContainerError: {
       borderColor: '#c21f16',
       borderWidth: s(2),
       backgroundColor: '#fff3f1',
     },
-    inputBottomSpace: {
-      marginBottom: s(18),
-    },
+    
     
     errorRow: {
       flexDirection: 'row',
