@@ -1,6 +1,7 @@
 import { useState, useEffect, use } from 'react';
-import { Image, Button, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions, TouchableWithoutFeedback, Keyboard} from 'react-native';
+import { Image, Button, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions, TouchableWithoutFeedback, Keyboard, ScrollView} from 'react-native';
 import {useRouter} from "expo-router";
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 
 export default function LoginScreen() {
@@ -29,7 +30,7 @@ export default function LoginScreen() {
   const handleLogin = async(): Promise<void> => {
     try {
       const url = `${API_URL}/auth/login`;
-
+      
       const response = await fetch(url, {
         method: "POST", // inserting data
         headers: {
@@ -40,20 +41,28 @@ export default function LoginScreen() {
       const userInformationData = await response.json();
       console.log(userInformationData.message);
       console.log(userInformationData.user)
+      
+      setPasswordMessage('');
+      setEmailMessage('');
+      setLoginMessage('');
+      let hasErrorMessage = false;
+
+
       if (!email.trim()) {
-        setEmailMessage('Please enter your email');
-        setLoginMessage('')
+        setEmailMessage('Email is required');
+        hasErrorMessage = true;
       }
-      
+  
       if (!password.trim()) {
-        setPasswordMessage('Please enter your password');
-        setLoginMessage('')
-        return;
+        setPasswordMessage('Password is required.');
+        hasErrorMessage = true;
       }
-      
-      if (password.length < 8) {
+  
+      else if (password.length < 8) {
         setPasswordMessage('Password must be at least 8 characters.');
-        setLoginMessage('')
+        hasErrorMessage = true;
+      }
+      if (hasErrorMessage) {
         return;
       }
       
@@ -79,171 +88,187 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.screen}>
-    {/* Fixed background decorations */}
-    <View style={styles.background} pointerEvents="none">
-      <View style={[styles.circle, styles.topLeftCircle]} />
-      <View style={[styles.circle, styles.topCenterCircle]} />
-      <View style={[styles.circle, styles.topRightCircle]} />
-      <View style={[styles.circle, styles.bottomLeftCircle]} />
-      <View style={[styles.circle, styles.bottomRightCircle]} />
-    </View>
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <KeyboardAvoidingView
+      {/* Fixed background decorations */}
+      <View style={styles.background} pointerEvents="none">
+        <View style={[styles.circle, styles.topLeftCircle]} />
+        <View style={[styles.circle, styles.topCenterCircle]} />
+        <View style={[styles.circle, styles.topRightCircle]} />
+        <View style={[styles.circle, styles.bottomLeftCircle]} />
+        <View style={[styles.circle, styles.bottomRightCircle]} />
+      </View>
+      
+      {/* <KeyboardAvoidingView
         style={styles.keyboardContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <View style={styles.scrollContent}>
+        behavior={Platform.OS === 'ios' ? 'height' : undefined}
+      > */}
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <KeyboardAwareScrollView>
+        {/* <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+        > */}
           
+            
 
-          <View style={[styles.content,
-              {
-                paddingHorizontal: horizontalPadding,
-                paddingTop: topPadding,
-                paddingBottom: bottomPadding
-              },
-            ]}
-          >
-            <View style={styles.logo}>
-              <Image 
-                source={require('../../assets/images/scrapbucks-logo.png')} 
-                style={styles.logo} 
-              />
-            </View>
-            <Text
-              style={[
-                styles.title,
+            <View style={[styles.content,
                 {
-                  fontSize: s(38),
-                  lineHeight: s(44),
+                  paddingHorizontal: horizontalPadding,
+                  paddingTop: topPadding,
+                  paddingBottom: bottomPadding
                 },
               ]}
             >
-              Welcome back
-            </Text>
-            <Text style={styles.subtitle}>Log In to continue</Text>
-
-            <View style={styles.form}>
-              <Text style={styles.label}>Email</Text>
-              <View style={styles.inputContainer}>
-                {/* <Text style={styles.inputIcon}>✉</Text> */}
-                <TextInput
-                  style={[styles.input,{paddingHorizontal: isSmallScreen ? 9 : 13,},]}
-                  placeholder="Required"
-                  placeholderTextColor="#9da7b7"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                  value={email}
-                  onChangeText={(text) => {
-                    setEmail(text);
-                    setEmailMessage('');
-                    setLoginMessage('')
-                  }}
+              <View style={styles.logo}>
+                <Image 
+                  source={require('../../assets/images/scrapbucks-logo.png')} 
+                  style={styles.logo} 
                 />
               </View>
-              {emailMessage ? (
-                  <Text style={styles.inputErrorMessage}>{emailMessage}</Text>
-                ) : null}
+              <Text
+                style={[
+                  styles.title,
+                  {
+                    fontSize: s(38),
+                    lineHeight: s(44),
+                  },
+                ]}
+              >
+                Welcome back
+              </Text>
+              <Text style={styles.subtitle}>Log In to continue</Text>
 
-              <View style={styles.passwordHeader}>
-                <Text style={styles.label}>Password</Text>
-                <Pressable onPress={() => setPasswordMessage('Password reset selected.')}>
-                  <Text style={styles.forgotPassword}>Forgot password?</Text>
+              <View style={styles.form}>
+                <Text style={styles.label}>Email</Text>
+                <View style={[styles.inputContainer, 
+                    emailMessage ? styles.inputContainerError : styles.inputBottomSpace,
+                  ]}>
+                  {/* <Text style={styles.inputIcon}>✉</Text> */}
+                  <TextInput
+                      style={[styles.input,{paddingHorizontal: isSmallScreen ? 9 : 13,},]}
+                      placeholderTextColor="#9da7b7"
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoComplete="email"
+                      value={email}
+                      onChangeText={(text) => {
+                        setEmail(text);
+                        setEmailMessage('');
+                        setLoginMessage('');
+                      }}
+                    />
+                </View>
+                {emailMessage ? (
+                    <View style={styles.errorRow}>
+                        <Text style={styles.errorIcon}>!</Text>
+                        <Text style={styles.errorText}>{emailMessage}</Text>
+                    </View>
+                    ) : null}
+                <View style={styles.passwordHeader}>
+                  <Text style={styles.label}>Password</Text>
+                  <Pressable onPress={() => setPasswordMessage('Password reset selected.')}>
+                    <Text style={styles.forgotPassword}>Forgot password?</Text>
+                  </Pressable>
+                  
+                </View>
+                <View style={[styles.inputContainer, 
+                    passwordMessage ? styles.inputContainerError : styles.inputBottomSpace,]}>
+                  {/* <Text style={styles.inputIcon}>⌑</Text> */}
+                  <TextInput
+                      style={[styles.input,{paddingHorizontal: isSmallScreen ? 9 : 13,},]}
+                      placeholder="At least 8 characters"
+                      placeholderTextColor="#9da7b7"
+                      secureTextEntry={!showPassword}
+                      autoComplete="new-password"
+                      value={password}
+                      onChangeText={(text) => {
+                        setPassword(text);
+                        setPasswordMessage('');
+                        setLoginMessage('');
+                      }}
+                    />
+                  <Pressable
+                    style={styles.eyeButton}
+                    onPress={() => setShowPassword((current) => !current)}
+                    accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    <Text style={styles.eyeText}>{showPassword ? 'Close' : 'Show'}</Text>
+                  </Pressable>
+                  
+                </View>
+                {passwordMessage ? (
+                    <View style={styles.errorRow}>
+                        <Text style={styles.errorIcon}>!</Text>
+                        <Text style={styles.errorText}>{passwordMessage}</Text>
+                    </View>
+                    ) : null}
+                  
+                
+                <Text style={styles.roleLabel}> Choose Role: </Text>
+                <View style={styles.roleSelector}>
+                  <Pressable 
+                    style={[styles.roleOption, selectedRole === "customer" && styles.selectedRole]} 
+                    onPress={() => setSelectedRole('customer')}
+                  >
+                    <Text style={[styles.roleText, selectedRole === "customer" && styles.selectedRoleText]}>
+                      Customer
+                    </Text>
+                  </Pressable>
+                  <Pressable 
+                    style={[styles.roleOption, selectedRole === "collector" && styles.selectedRole]} 
+                    onPress={() => setSelectedRole('collector')}
+                  >
+                    <Text style={[styles.roleText, selectedRole === "collector" && styles.selectedRoleText]}>
+                      Collector
+                    </Text>
+                  </Pressable>
+                
+                </View>
+
+
+                <Pressable style={styles.signInButton} onPress={handleLogin}>
+                  <Text style={styles.signInText}>Log In</Text>
                 </Pressable>
                 
+                {/* display the login error message */}
+                {loginMessage ? <Text style={styles.loginMessage}>{loginMessage}</Text> : null}
               </View>
-              <View style={styles.inputContainer}>
-                {/* <Text style={styles.inputIcon}>⌑</Text> */}
-                <TextInput
-                  style={[styles.input,{paddingHorizontal: isSmallScreen ? 9 : 13,},]}
-                  placeholder="At least 8 characters"
-                  placeholderTextColor="#9da7b7"
-                  secureTextEntry={!showPassword}
-                  autoComplete="password"
-                  value={password}
-                  onChangeText={(text) => {
-                    setPassword(text);
-                    setPasswordMessage('');
-                    setLoginMessage('');
-                  }}
-                />
-                <Pressable
-                  style={styles.eyeButton}
-                  onPress={() => setShowPassword((current) => !current)}
-                  accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  <Text style={styles.eyeText}>{showPassword ? 'Close' : 'Show'}</Text>
-                </Pressable>
-                
-              </View>
-              {passwordMessage ? (
-                  <Text style={styles.inputErrorMessage}>{passwordMessage}</Text>
-                ) : null}
-                
+
               
-              <Text style={styles.roleLabel}> Choose Role: </Text>
-              <View style={styles.roleSelector}>
-                <Pressable 
-                  style={[styles.roleOption, selectedRole === "customer" && styles.selectedRole]} 
-                  onPress={() => setSelectedRole('customer')}
-                >
-                  <Text style={[styles.roleText, selectedRole === "customer" && styles.selectedRoleText]}>
-                    Customer
-                  </Text>
-                </Pressable>
-                <Pressable 
-                  style={[styles.roleOption, selectedRole === "collector" && styles.selectedRole]} 
-                  onPress={() => setSelectedRole('collector')}
-                >
-                  <Text style={[styles.roleText, selectedRole === "collector" && styles.selectedRoleText]}>
-                    Collector
-                  </Text>
-                </Pressable>
-              
+              {/* <View style={styles.dividerRow}>
+                <View style={styles.divider} />
+                <Text style={styles.orText}>or</Text>
+                <View style={styles.divider} />
               </View>
 
-
-              <Pressable style={styles.signInButton} onPress={handleLogin}>
-                <Text style={styles.signInText}>Log In</Text>
+              <Pressable
+                style={styles.googleButton}
+                onPress={() => setMessage('Google sign in selected.')}
+              >
+                <Text style={styles.googleIcon}>×</Text>
+                <Text style={styles.googleText}>Sign in with Google</Text>
               </Pressable>
-              
-              {/* display the login error message */}
-              {loginMessage ? <Text style={styles.loginMessage}>{loginMessage}</Text> : null}
+
+              <Pressable
+                style={styles.appleButton}
+                onPress={() => setMessage('Apple sign in selected.')}
+              >
+                <Text style={styles.appleIcon}>●</Text>
+                <Text style={styles.appleText}>Sign in with Apple</Text>
+              </Pressable> */}
+
+              <View style={styles.signupRow}>
+                <Text style={styles.signupText}>Don't have an account? </Text>
+                <Pressable onPress={() => router.replace('/signup')}>
+                  <Text style={styles.signupLink}>Sign up</Text>
+                </Pressable>
+              </View>
             </View>
-
-            
-            <View style={styles.dividerRow}>
-              <View style={styles.divider} />
-              <Text style={styles.orText}>or</Text>
-              <View style={styles.divider} />
-            </View>
-
-            <Pressable
-              style={styles.googleButton}
-              onPress={() => setMessage('Google sign in selected.')}
-            >
-              <Text style={styles.googleIcon}>×</Text>
-              <Text style={styles.googleText}>Sign in with Google</Text>
-            </Pressable>
-
-            <Pressable
-              style={styles.appleButton}
-              onPress={() => setMessage('Apple sign in selected.')}
-            >
-              <Text style={styles.appleIcon}>●</Text>
-              <Text style={styles.appleText}>Sign in with Apple</Text>
-            </Pressable>
-
-            <View style={styles.signupRow}>
-              <Text style={styles.signupText}>Don't have an account? </Text>
-              <Pressable onPress={() => setMessage('Sign up selected.')}>
-                <Text style={styles.signupLink}>Sign up</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-    </TouchableWithoutFeedback>
+          </KeyboardAwareScrollView>
+        </TouchableWithoutFeedback>
+          {/* </ScrollView>
+      </KeyboardAvoidingView> */}
     </View>
   );
 }
@@ -265,7 +290,7 @@ const createStyles = (s: (value: number) => number) =>
   },
   scrollContent: {
     flexGrow: 1,
-    // overflow: 'hidden',
+    justifyContent: 'center',
   },  
   content: {
     zIndex: 1,
@@ -371,6 +396,9 @@ const createStyles = (s: (value: number) => number) =>
   //   fontSize: s(22),
   //   textAlign: 'center',
   // },
+  inputBottomSpace: {
+    marginBottom: s(18),
+  },
   input: {
     flex: 1,
     height: '100%',
@@ -489,7 +517,7 @@ const createStyles = (s: (value: number) => number) =>
   signupRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: s(30),
+    marginTop: s(40),
   },
   signupText: {
     color: '#30256b',
@@ -503,7 +531,7 @@ const createStyles = (s: (value: number) => number) =>
 
   roleLabel: {
     marginTop: s(18),
-    marginBottom: s(8),
+    marginBottom: s(12),
     color: '#30256b',
     fontSize: s(16),
     fontWeight: '500',
@@ -517,6 +545,7 @@ const createStyles = (s: (value: number) => number) =>
     padding: s(4),
     borderRadius: s(24),
     backgroundColor: '#d9dfe5',
+    marginBottom: s(25)
   },
   
   roleOption: {
@@ -545,4 +574,46 @@ const createStyles = (s: (value: number) => number) =>
     backgroundColor: 'transparent',
     zIndex: 1,
   },
+  inputErrorMessage: {
+    marginTop: s(12),
+    color: '#f51639',
+    fontSize: s(13),
+    textAlign: 'left',
+    fontWeight: '500',
+  },
+  inputContainerError: {
+      borderColor: '#c21f16',
+      borderWidth: s(2),
+      backgroundColor: '#fff3f1',
+    },
+    inputBottomSpace: {
+      marginBottom: s(18),
+    },
+    
+    errorRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: s(8),
+      marginBottom: s(4),
+    },
+    
+    errorIcon: {
+      width: s(20),
+      height: s(20),
+      marginRight: s(8),
+      borderWidth: s(2),
+      borderColor: '#c21f16',
+      borderRadius: s(10),
+      color: '#c21f16',
+      fontSize: s(13),
+      fontWeight: '700',
+      lineHeight: s(16),
+      textAlign: 'center',
+    },
+    
+    errorText: {
+      color: '#c21f16',
+      fontSize: s(14),
+      fontWeight: '600',
+    },
 });
