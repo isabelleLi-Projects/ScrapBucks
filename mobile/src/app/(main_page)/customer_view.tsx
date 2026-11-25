@@ -1,9 +1,10 @@
-import { useEffect, useState, useRef } from "react";
-import { StyleSheet, View, Image, Text, ScrollView, Pressable, Modal } from "react-native";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { StyleSheet, View, Image, Text, ScrollView, Pressable, Button } from "react-native";
 import { styles } from "../../hooks/styles"
 import { Profile } from "../../components/profile"
-import { Post, PickupStatus } from "../../../../shared/types/post";
+import { Post, PickupStatus, days } from "../../../../shared/types/post";
 import { Dropdown } from "react-native-element-dropdown";
+import { useFocusEffect, useRouter } from "expo-router";
 
 //const API_URL = process.env.EXPO_PUBLIC_API_URL;
 //const API_URL = "http://localhost:3000";
@@ -11,90 +12,85 @@ const API_URL = "http://10.1.10.149:3000"; // get ip with ipconfig getifaddr en0
 // const API_URL = "http://10.0.0.11:3000" // Isabelle's ip
 
 export default function CustomerView() {
-  const customerId = 1;
+  const router = useRouter();
+  const customerId = 2;
   const [activeTab, setActiveTab] = useState<"current" | "old">("current");
   const [posts, setPosts] = useState<Post[]>([]);
   
-  useEffect(() => {
-  async function loadPosts() {
-    try {
-      const url = `${API_URL}/api/customers/${customerId}/posts`;
-      console.log("Fetching:", url);
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        throw new Error("Failed to fetch posts");
-      }
+  const loadPosts = useCallback(async () => {
+  try {
+    const url = `${API_URL}/api/customers/${customerId}/posts`;
 
-      const postsFromServer: Post[] = await response.json();
-      setPosts(postsFromServer);
+    console.log("Fetching:", url);
 
-    } catch (error) {
-      console.error("Error loading posts:", error);
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch posts");
     }
-  }
 
-  loadPosts();
+    const postsFromServer: Post[] = await response.json();
+
+    console.log("Posts loaded:", postsFromServer);
+
+    setPosts(postsFromServer);
+  } catch (error) {
+    console.error("Error loading posts:", error);
+  }
 }, [customerId]);
 
-  const postsToDisplay =
-    activeTab === "current"
-      ? posts.filter((post) => post.status !== "pickedUp")
-      : posts.filter((post) => post.status === "pickedUp");
+useFocusEffect(
+  useCallback(() => {
+    loadPosts();
+  }, [loadPosts])
+);
+
+  const currentPosts = posts.filter((post) => post.status !== "pickedUp");
+  const archivedPosts = posts.filter((post) => post.status === "pickedUp");
+
+  const postsToDisplay = activeTab === "current" ? currentPosts : archivedPosts;
 
     return (
-
         <View style={styles.container}>
-            <Profile />
-            <View style={customerStyles.TabRow}>
-              <Text style={customerStyles.Header}>My Posts</Text>
-              {/* tab for switching between current post and old posts */}
-              <View style={customerStyles.TabContainer}>
-                <Pressable
-                  style={[
-                    customerStyles.Tab,
-                    activeTab === "current" && customerStyles.ActiveCurrentTab,
-                  ]}
-                  onPress={() => setActiveTab("current")}
-                >
-                  <Text style={[ customerStyles.TabText,
-                    activeTab === "current" && customerStyles.ActiveTabText,
-                  ]}>Current</Text>
-                </Pressable>
-                <Pressable
-                  style={[
-                    customerStyles.Tab,
-                    activeTab === "old" && customerStyles.ActiveOldTab,
-                  ]}
-                  onPress={() => setActiveTab("old")}
-                >
-                  <Text style={[ customerStyles.TabText,
-                    activeTab === "old" && customerStyles.ActiveTabText,
-                  ]}>Archived</Text>
-                </Pressable>
-              </View>
+          <Profile/>
+          <View style={customerStyles.TabRow}>
+            <Text style={customerStyles.Header}>My Posts</Text>
+            {/* tab for switching between current post and old posts */}
+            <View style={customerStyles.TabContainer}>
+              <Pressable
+                style={[customerStyles.Tab, activeTab === "current" && customerStyles.ActiveCurrentTab,]}
+                onPress={() => setActiveTab("current")}>
+                <Text style={[ customerStyles.TabText,
+                  activeTab === "current" && customerStyles.ActiveTabText,
+                ]}>Current</Text>
+              </Pressable>
+              <Pressable
+                style={[customerStyles.Tab, activeTab === "old" && customerStyles.ActiveOldTab,]}
+                onPress={() => setActiveTab("old")}
+              >
+                <Text style={[ customerStyles.TabText,
+                  activeTab === "old" && customerStyles.ActiveTabText,
+                ]}>Archived</Text>
+              </Pressable>
             </View>
+          </View>
             
-            <ScrollView style={customerStyles.PostContainer}
-              showsVerticalScrollIndicator={false}>
-              {postsToDisplay.map((post) => (
+          <ScrollView style={customerStyles.PostContainer} showsVerticalScrollIndicator={false}>
+            {activeTab === "current" && currentPosts.length === 0 ? (
+              <View style={customerStyles.EmptyPostContainer}>
+                <Text style={customerStyles.EmptyPostText}>You do not have a current post.</Text>
+                <Button title="Create Post" onPress={() => router.push("/create-post")}/>
+              </View>
+            ) : (
+              postsToDisplay.map((post) => (
                 <PostDisplay key={post.post_id} post={post} />
-              ))}
-            </ScrollView>
+              ))
+            )}
+          </ScrollView>
             
         </View>
     );
 }
-
-const days = [
-  { label: "Monday", value: 1 },
-  { label: "Tuesday", value: 2 },
-  { label: "Wednesday", value: 3 },
-  { label: "Thursday", value: 4 },
-  { label: "Friday", value: 5 },
-  { label: "Saturday", value: 6 },
-  { label: "Sunday", value: 7 },
-];
 
 function PostDisplay({ post }: { post: Post }) {
   const [imageIndex, setImageIndex] = useState(0);
@@ -118,8 +114,6 @@ function PostDisplay({ post }: { post: Post }) {
   const javascriptDay = new Date().getDay();
   const today = javascriptDay === 0 ? 7 : javascriptDay;
   const [selectedDay, setSelectedDay] = useState(today);
-  const selectedDayName = days.find((day) => day.value === selectedDay)?.label ?? "Select a day";
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const selectedTimeSlots = post.time_slots.filter((slot) => slot.day_of_week === selectedDay);
 
   return (
@@ -154,9 +148,7 @@ function PostDisplay({ post }: { post: Post }) {
               labelField="label"
               valueField="value"
               value={selectedDay}
-              onChange={(item) => {
-                setSelectedDay(item.value);
-              }}
+              onChange={(item) => {setSelectedDay(item.value);}}
               placeholder="Select a day"
               maxHeight={200}
               selectedTextStyle={customerStyles.DropdownText}
@@ -235,9 +227,9 @@ function formatTime(time: string) {
 
 function ProgressTracker({ status }: { status: PickupStatus }) {
   const steps = [
-    { key: "findingDriver", label: "Finding driver" },
-    { key: "driverAccepted", label: "Driver accepted" },
-    { key: "pickedUp", label: "Picked up" },
+    { key: "findingDriver", label: "Finding driver" }, // index 0
+    { key: "driverAccepted", label: "Driver accepted" }, // index 1
+    { key: "pickedUp", label: "Picked up" }, // index 2
   ];
 
   const currentStep = steps.findIndex((step) => step.key === status);
@@ -251,12 +243,12 @@ function ProgressTracker({ status }: { status: PickupStatus }) {
         return (
           <View style={customerStyles.ProgressStep} key={step.key}>
             <View style={customerStyles.CircleAndLine}>
-              <View style={[customerStyles.ProgressCircle, isCompleted && customerStyles.CompletedCircle,]}>
+              <View style={[customerStyles.ProgressCircle, isCompleted && customerStyles.CompletedCircle]}>
                 {isCompleted}
               </View>
 
               {index < steps.length - 1 && (
-                <View style={[customerStyles.ProgressLine, lineIsCompleted && customerStyles.CompletedLine,]}/>
+                <View style={[customerStyles.ProgressLine, lineIsCompleted && customerStyles.CompletedLine]}/>
               )}
             </View>
 
@@ -556,6 +548,18 @@ DropdownItemText: {
 },
 DropdownText: {
   fontSize: 14,
+  color: "#29445C",
+},
+
+EmptyPostContainer: {
+  alignItems: "center",
+  justifyContent: "center",
+  padding: 30,
+},
+
+EmptyPostText: {
+  marginBottom: 15,
+  fontSize: 16,
   color: "#29445C",
 },
 
