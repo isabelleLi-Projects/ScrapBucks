@@ -7,8 +7,8 @@ CREATE TABLE Users (
   display_name      VARCHAR(100)  NOT NULL,
   email             VARCHAR(100)  NOT NULL UNIQUE,
   password_hash     VARCHAR(255)  NOT NULL,
-  profile_photo     VARCHAR(100)  NOT NULL,
-  rating            DECIMAL(3,2)  NOT NULL,
+  profile_photo     VARCHAR(100)  NULL DEFAULT NULL,
+  rating            DECIMAL(3,2)  NOT NULL DEFAULT 0.00,
 
   CHECK (rating BETWEEN 0.00 AND 5.00)
 );

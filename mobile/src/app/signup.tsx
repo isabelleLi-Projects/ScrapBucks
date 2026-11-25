@@ -5,6 +5,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 
 
 
+
 export default function SignUpScreen() {
     const { width, height } = useWindowDimensions();
     const isSmallScreen = height < 700;
@@ -26,6 +27,8 @@ export default function SignUpScreen() {
     const [passwordMessage, setPasswordMessage] = useState('');
     const [emailMessage, setEmailMessage] = useState('');
     const[message, setMessage] = useState('');
+
+    const [selectedRole, setSelectedRole] = useState<"customer" | "collector"> ("customer");
 
     const API_URL = "http://10.0.0.11:3000"
 
@@ -60,7 +63,6 @@ export default function SignUpScreen() {
       }
   
       try {
-
         const response = await fetch(`${API_URL}/auth/signup`, {
           method: 'POST',
           headers: {
@@ -79,11 +81,16 @@ export default function SignUpScreen() {
           setMessage(data.message || 'Could not create account.');
           return;
         }
-  
-        router.replace('/login');
+        if (selectedRole == "customer") {
+          router.replace("/customer_view")
+        }else {
+          router.replace("/collector_view")
+        }
+        // router.replace('/login');
       } catch (error) {
         setMessage('Unable to connect to the server.');
-        console.error('Signup error:', error);
+        console.error('Signup failed:', error);
+        throw error;
       }
     };
   
@@ -224,7 +231,25 @@ export default function SignUpScreen() {
                         <Text style={styles.errorText}>{passwordMessage}</Text>
                     </View>
                     ) : null}
-                  
+                  <Text style={styles.roleLabel}> Choose Role: </Text>
+                <View style={styles.roleSelector}>
+                  <Pressable 
+                    style={[styles.roleOption, selectedRole === "customer" && styles.selectedRole]} 
+                    onPress={() => setSelectedRole('customer')}
+                  >
+                    <Text style={[styles.roleText, selectedRole === "customer" && styles.selectedRoleText]}>
+                      Customer
+                    </Text>
+                  </Pressable>
+                  <Pressable 
+                    style={[styles.roleOption, selectedRole === "collector" && styles.selectedRole]} 
+                    onPress={() => setSelectedRole('collector')}
+                  >
+                    <Text style={[styles.roleText, selectedRole === "collector" && styles.selectedRoleText]}>
+                      Collector
+                    </Text>
+                  </Pressable>
+                </View>
   
                   <Pressable
                     style={styles.signUpButton}
@@ -548,7 +573,7 @@ const createStyles = (s: (value: number) => number) =>
     },
   
     roleLabel: {
-      marginTop: s(18),
+      marginTop: s(5),
       marginBottom: s(8),
       color: '#30256b',
       fontSize: s(16),

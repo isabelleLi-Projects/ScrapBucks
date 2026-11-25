@@ -28,6 +28,33 @@ export default function LoginScreen() {
   const router = useRouter();
 
   const handleLogin = async(): Promise<void> => {
+    setPasswordMessage('');
+    setEmailMessage('');
+    setLoginMessage('');
+    let hasErrorMessage = false;
+
+
+    if (!email.trim()) {
+      setEmailMessage('Email is required');
+      hasErrorMessage = true;
+    }
+
+    if (!password.trim()) {
+      setPasswordMessage('Password is required.');
+      hasErrorMessage = true;
+    }
+
+    else if (password.length < 8) {
+      setPasswordMessage('Password must be at least 8 characters.');
+      hasErrorMessage = true;
+    }
+    if (hasErrorMessage) {
+      return;
+    }
+    
+    setPasswordMessage('');
+    setLoginMessage('')
+
     try {
       const url = `${API_URL}/auth/login`;
       
@@ -42,45 +69,16 @@ export default function LoginScreen() {
       console.log(userInformationData.message);
       console.log(userInformationData.user)
       
-      setPasswordMessage('');
-      setEmailMessage('');
-      setLoginMessage('');
-      let hasErrorMessage = false;
-
-
-      if (!email.trim()) {
-        setEmailMessage('Email is required');
-        hasErrorMessage = true;
-      }
-  
-      if (!password.trim()) {
-        setPasswordMessage('Password is required.');
-        hasErrorMessage = true;
-      }
-  
-      else if (password.length < 8) {
-        setPasswordMessage('Password must be at least 8 characters.');
-        hasErrorMessage = true;
-      }
-      if (hasErrorMessage) {
-        return;
-      }
-      
-      setPasswordMessage('');
-      setLoginMessage('')
-      
       if (!response.ok) {
         setLoginMessage(userInformationData.message || "Login failed"); 
         return;
       }
-      
+
       if (selectedRole == "customer") {
         router.replace("/customer_view")
       }else {
         router.replace("/collector_view")
       }
-      
-      
     }catch (error) {
       console.error("Error logging in: ", loginMessage)
     }
@@ -149,13 +147,16 @@ export default function LoginScreen() {
                       style={[styles.input,{paddingHorizontal: isSmallScreen ? 9 : 13,},]}
                       placeholderTextColor="#9da7b7"
                       keyboardType="email-address"
+                      textContentType='username'
+                      autoComplete="username"
+                      autoCorrect={false}
                       autoCapitalize="none"
-                      autoComplete="email"
                       value={email}
+                      onFocus={() => setLoginMessage('')}
                       onChangeText={(text) => {
                         setEmail(text);
                         setEmailMessage('');
-                        setLoginMessage('');
+                        // setLoginMessage('');
                       }}
                     />
                 </View>
@@ -182,10 +183,11 @@ export default function LoginScreen() {
                       secureTextEntry={!showPassword}
                       autoComplete="password"
                       value={password}
+                      onFocus={() => setLoginMessage('')}
                       onChangeText={(text) => {
                         setPassword(text);
                         setPasswordMessage('');
-                        setLoginMessage('');
+                        // setLoginMessage('');
                       }}
                     />
                   <Pressable
@@ -531,7 +533,7 @@ const createStyles = (s: (value: number) => number) =>
 
   roleLabel: {
     marginTop: s(18),
-    marginBottom: s(12),
+    marginBottom: s(8),
     color: '#30256b',
     fontSize: s(16),
     fontWeight: '500',
