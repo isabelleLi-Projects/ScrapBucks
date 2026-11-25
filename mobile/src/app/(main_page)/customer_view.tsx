@@ -13,7 +13,7 @@ const API_URL = "http://10.1.10.149:3000"; // get ip with ipconfig getifaddr en0
 
 export default function CustomerView() {
   const router = useRouter();
-  const customerId = 1;
+  const customerId = 2;
   const [activeTab, setActiveTab] = useState<"current" | "old">("current");
   const [posts, setPosts] = useState<Post[]>([]);
   

@@ -26,7 +26,7 @@ export default function CreatePost() {
     const [startTime, setStartTime] = useState("");
     const [endTime, setEndTime] = useState("");
 
-    const [imageUri, setImageUri] = useState<string | null>(null);
+    const [imageUris, setImageUris] = useState<string[]>([]);
 
   
 
@@ -40,14 +40,9 @@ export default function CreatePost() {
         const coordinates = await getCoordinates(fullAddress);
         if (!coordinates) { return; }
 
-        let uploadedPhotoUrl = "";
-        let cloudinaryPublicId = "";
-
-        if (imageUri) {
-            const uploadedImage = await uploadImage(imageUri);
-            uploadedPhotoUrl = uploadedImage.url;
-            cloudinaryPublicId = uploadedImage.publicId;
-        }
+        const uploadedPhotos = imageUris.length > 0
+            ? await Promise.all(imageUris.map((uri) => uploadImage(uri)))
+            : [];
         
         const newPost = {
             price: Number(price),
@@ -63,7 +58,7 @@ export default function CreatePost() {
             pickup_notes: pickupNotes,
             delivery_instruction: deliveryInstruction,
 
-            photos: uploadedPhotoUrl ? [{url: uploadedPhotoUrl, publicId: cloudinaryPublicId}] : [],
+            photos: uploadedPhotos.map((photo) => ({url: photo.url, publicId: photo.publicId})),
 
             time_slots: [
                 {
@@ -105,7 +100,7 @@ export default function CreatePost() {
         }
     }
 
-    async function chooseImage() {
+    async function chooseImages() {
         const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
         if (!permission.granted) {
@@ -114,13 +109,14 @@ export default function CreatePost() {
         }
 
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            quality: 0.8,
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsMultipleSelection: true,
+          selectionLimit: 5,
+          quality: 0.8,
         });
 
         if (!result.canceled) {
-            setImageUri(result.assets[0].uri);
+          setImageUris(result.assets.map((asset) => asset.uri));
         }
     }
 
@@ -189,18 +185,21 @@ export default function CreatePost() {
         />
 
         <Text style={formStyles.Label}>Add Photos</Text>
-        <Button title="Choose Photo" onPress={chooseImage} />
-        {imageUri && (
-        <Image
-            source={{ uri: imageUri }}
-            style={{
-            width: 150,
-            height: 150,
-            marginTop: 10,
-            borderRadius: 10,
-            }}
-        />
-        )}
+        <Button title="Choose Photo" onPress={chooseImages} />
+        <ScrollView horizontal>
+          {imageUris.map((uri, index) => (
+            <Image
+              key={index}
+              source={{ uri }}
+              style={{
+                width: 100,
+                height: 100,
+                marginRight: 10,
+                borderRadius: 10,
+              }}
+            />
+          ))}
+        </ScrollView>
 
         <Text style={formStyles.Label}>Times Available</Text>
         <View>
