@@ -75,12 +75,12 @@ VALUES
 
 -- Post photos
 INSERT INTO PostPhotos
-(post_id, photo_order, photo_url)
+(post_id, photo_order, photo_url, cloudinary_public_id)
 VALUES
-(1, 1, 'https://images.example.com/recycling-bags-1.jpg'),
-(1, 2, 'https://images.example.com/recycling-bags-2.jpg'),
-(2, 1, 'https://images.example.com/aluminum-cans.jpg'),
-(3, 1, 'https://images.example.com/cardboard.jpg');
+(1, 1, 'https://res.cloudinary.com/czn8mwtl/image/upload/v1795570711/cld-sample.jpg', 'cld-sample'),
+(1, 2, 'https://res.cloudinary.com/czn8mwtl/image/upload/v1795570712/main-sample.png', 'main-sample'),
+(2, 1, 'https://res.cloudinary.com/czn8mwtl/image/upload/v1795570712/cld-sample-5.jpg', 'cld-sample-5'),
+(3, 1, 'https://res.cloudinary.com/czn8mwtl/image/upload/v1795570711/cld-sample-4.jpg', 'cld-sample-4');
 
 -- Driver locations
 INSERT INTO DriverLocations

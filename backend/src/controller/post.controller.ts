@@ -95,10 +95,10 @@ export class PostController {
       for (let i = 0; i < photos.length; i++) {
         await connection.execute(
           `
-          INSERT INTO PostPhotos (post_id, photo_order, photo_url)
-          VALUES (?, ?, ?)
+          INSERT INTO PostPhotos (post_id, photo_order, photo_url, cloudinary_public_id)
+          VALUES (?, ?, ?, ?)
           `,
-          [postId, i, photos[i]],
+          [postId, i, photos[i].url, photos[i].publicId],
         );
       }
 

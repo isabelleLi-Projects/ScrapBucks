@@ -54,6 +54,7 @@ CREATE TABLE PostPhotos (
     post_id INT NOT NULL,
     photo_order INT NOT NULL DEFAULT 0,
     photo_url VARCHAR(2048) NOT NULL,
+    cloudinary_public_id VARCHAR(255) NOT NULL,
     PRIMARY KEY (post_id, photo_order),
     FOREIGN KEY (post_id) REFERENCES Posts(post_id) ON DELETE CASCADE
 );

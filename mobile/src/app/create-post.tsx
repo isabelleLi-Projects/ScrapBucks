@@ -1,104 +1,128 @@
 import { useState } from "react";
-import {Alert, Button, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View} from "react-native";
+import {Alert, Button, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View} from "react-native";
 import { useRouter } from "expo-router";
 import { Dropdown } from "react-native-element-dropdown";
 import { days } from "../../../shared/types/post";
 import * as Location from "expo-location";
+import * as ImagePicker from "expo-image-picker";
+import { uploadImage } from "../utils/cloudinary"
 
 const API_URL = "http://10.1.10.149:3000"; // get ip with ipconfig getifaddr en0
 
 export default function CreatePost() {
-  const router = useRouter();
+    const router = useRouter();
 
-  const customerId = 2;
+    const customerId = 2;
 
-  const [price, setPrice] = useState("");
-  const [description, setDescription] = useState("");
-  const [addressLine, setAddressLine] = useState("");
-  const [city, setCity] = useState("");
-  //const [state, setState] = useState("");
-  const [zipCode, setZipCode] = useState("");
-  const [latitude, setLatitude] = useState("");
-  const [longitude, setLongitude] = useState("");
-  const [pickupNotes, setPickupNotes] = useState("");
-  const [photoUrl, setPhotoUrl] = useState("");
-  const [deliveryInstruction, setDeliveryInstruction] = useState<"outside pickup" | "knock please">("outside pickup");
-  const [dayOfWeek, setDayOfWeek] = useState(1);
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
+    const [price, setPrice] = useState("");
+    const [description, setDescription] = useState("");
+    const [addressLine, setAddressLine] = useState("");
+    const [city, setCity] = useState("");
+    //const [state, setState] = useState("");
+    const [zipCode, setZipCode] = useState("");
+    const [pickupNotes, setPickupNotes] = useState("");
+    const [deliveryInstruction, setDeliveryInstruction] = useState<"outside pickup" | "knock please">("outside pickup");
+    const [dayOfWeek, setDayOfWeek] = useState(1);
+    const [startTime, setStartTime] = useState("");
+    const [endTime, setEndTime] = useState("");
 
-  async function createPost() {
-    if (!price || !description || !addressLine || !city || !zipCode || !photoUrl || !startTime || !endTime) {
-      Alert.alert("Missing information", "Please fill out all required fields.");
-      return;
-    }
+    const [imageUri, setImageUri] = useState<string | null>(null);
 
-    const fullAddress = `${addressLine}, ${city}, CA ${zipCode}`;
-    const coordinates = await getCoordinates(fullAddress);
+  
 
-    if (!coordinates) {
-        return;
-    }
-
-
-    const newPost = {
-      price: Number(price),
-      description,
-
-      address_line: addressLine,
-      city,
-      state: "CA",
-      zip_code: zipCode,
-      latitude: coordinates.latitude,
-      longitude: coordinates.longitude,
-
-      pickup_notes: pickupNotes,
-      delivery_instruction: deliveryInstruction,
-
-      photos: [photoUrl],
-
-      time_slots: [
-        {
-          day_of_week: dayOfWeek,
-          start_time: startTime,
-          end_time: endTime,
-        },
-      ],
-    };
-    
-
-    try {
-      const response = await fetch(
-        `${API_URL}/api/customers/${customerId}/posts`,
-        {
-          method: "POST",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify(newPost),
+    async function createPost() {
+        if (!price || !description || !addressLine || !city || !zipCode || !startTime || !endTime) {
+            Alert.alert("Missing information", "Please fill out all required fields.");
+            return;
         }
-      );
 
-      const result = await response.json();
+        const fullAddress = `${addressLine}, ${city}, CA ${zipCode}`;
+        const coordinates = await getCoordinates(fullAddress);
+        if (!coordinates) { return; }
 
-        console.log("Response status:", response.status);
-        console.log("Response body:", result);
+        let uploadedPhotoUrl = "";
+        let cloudinaryPublicId = "";
 
+        if (imageUri) {
+            const uploadedImage = await uploadImage(imageUri);
+            uploadedPhotoUrl = uploadedImage.url;
+            cloudinaryPublicId = uploadedImage.publicId;
+        }
+        
+        const newPost = {
+            price: Number(price),
+            description,
 
-      if (!response.ok) {
-        throw new Error(result.message || "Could not create post");
-      }
+            address_line: addressLine,
+            city,
+            state: "CA",
+            zip_code: zipCode,
+            latitude: coordinates.latitude,
+            longitude: coordinates.longitude,
 
-      Alert.alert("Success", "Your post was created.");
+            pickup_notes: pickupNotes,
+            delivery_instruction: deliveryInstruction,
 
-      router.back();
-    } catch (error) {
-      console.error("Error creating post:", error);
+            photos: uploadedPhotoUrl ? [{url: uploadedPhotoUrl, publicId: cloudinaryPublicId}] : [],
 
-      Alert.alert(
-        "Error",
-        "Could not create post. Please try again."
-      );
+            time_slots: [
+                {
+                    day_of_week: dayOfWeek,
+                    start_time: startTime,
+                    end_time: endTime,
+                },
+            ],
+        };
+        
+
+        try {
+            const response = await fetch(
+                `${API_URL}/api/customers/${customerId}/posts`,
+                {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(newPost),
+                }
+            );
+
+            const result = await response.json();
+            console.log("Response status:", response.status);
+            console.log("Response body:", result);
+
+            if (!response.ok) {
+                throw new Error(result.message || "Could not create post");
+            }
+
+            Alert.alert("Success", "Your post was created.");
+
+            router.back();
+        } catch (error) {
+            console.error("Error creating post:", error);
+            Alert.alert(
+                "Error",
+                "Could not create post. Please try again."
+            );
+        }
     }
-  }
+
+    async function chooseImage() {
+        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+        if (!permission.granted) {
+            alert("Permission to access photos is required.");
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            quality: 0.8,
+        });
+
+        if (!result.canceled) {
+            setImageUri(result.assets[0].uri);
+        }
+    }
 
   return (
     <KeyboardAvoidingView style={formStyles.Screen} behavior={Platform.OS === "ios" ? "padding" : undefined}>
@@ -164,13 +188,19 @@ export default function CreatePost() {
           multiline
         />
 
-        <Text style={formStyles.Label}>Photo URL</Text>
-        <TextInput style={formStyles.Input}
-          placeholder="Paste an image URL"
-          value={photoUrl}
-          onChangeText={setPhotoUrl}
-          autoCapitalize="none"
+        <Text style={formStyles.Label}>Add Photos</Text>
+        <Button title="Choose Photo" onPress={chooseImage} />
+        {imageUri && (
+        <Image
+            source={{ uri: imageUri }}
+            style={{
+            width: 150,
+            height: 150,
+            marginTop: 10,
+            borderRadius: 10,
+            }}
         />
+        )}
 
         <Text style={formStyles.Label}>Times Available</Text>
         <View>
