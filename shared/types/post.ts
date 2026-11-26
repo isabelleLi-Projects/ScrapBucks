@@ -16,7 +16,7 @@ export type PickupStatus =
   | "driverAccepted"
   | "pickedUp";
 
-type TimeSlot = {
+export type TimeSlot = {
   day_of_week: number;
   start_time: string;
   end_time: string;

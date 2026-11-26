@@ -2,7 +2,7 @@ import { useState } from "react";
 import {Alert, Button, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View} from "react-native";
 import { useRouter } from "expo-router";
 import { Dropdown } from "react-native-element-dropdown";
-import { days } from "../../../shared/types/post";
+import { days, TimeSlot } from "../../../shared/types/post";
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import { uploadImage } from "../utils/cloudinary"
@@ -18,20 +18,23 @@ export default function CreatePost() {
     const [description, setDescription] = useState("");
     const [addressLine, setAddressLine] = useState("");
     const [city, setCity] = useState("");
-    //const [state, setState] = useState("");
     const [zipCode, setZipCode] = useState("");
     const [pickupNotes, setPickupNotes] = useState("");
     const [deliveryInstruction, setDeliveryInstruction] = useState<"outside pickup" | "knock please">("outside pickup");
-    const [dayOfWeek, setDayOfWeek] = useState(1);
-    const [startTime, setStartTime] = useState("");
-    const [endTime, setEndTime] = useState("");
+    const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([
+      {
+        day_of_week: 1,
+        start_time: "",
+        end_time: "",
+      },
+    ]);
 
     const [imageUris, setImageUris] = useState<string[]>([]);
 
   
 
     async function createPost() {
-        if (!price || !description || !addressLine || !city || !zipCode || !startTime || !endTime) {
+        if (!price || !description || !addressLine || !city || !zipCode) {
             Alert.alert("Missing information", "Please fill out all required fields.");
             return;
         }
@@ -60,13 +63,7 @@ export default function CreatePost() {
 
             photos: uploadedPhotos.map((photo) => ({url: photo.url, publicId: photo.publicId})),
 
-            time_slots: [
-                {
-                    day_of_week: dayOfWeek,
-                    start_time: startTime,
-                    end_time: endTime,
-                },
-            ],
+            time_slots: timeSlots
         };
         
 
@@ -118,6 +115,25 @@ export default function CreatePost() {
         if (!result.canceled) {
           setImageUris(result.assets.map((asset) => asset.uri));
         }
+    }
+
+    function updateTimeSlot(index: number, field: keyof TimeSlot, value: number | string) {
+      setTimeSlots((currentSlots) =>
+        currentSlots.map((slot, slotIndex) => slotIndex === index
+            ? { ...slot, [field]: value }
+            : slot
+        )
+      );
+    }
+
+    function addTimeSlot() {
+      setTimeSlots((currentSlots) => [...currentSlots,
+        {
+          day_of_week: 1,
+          start_time: "",
+          end_time: "",
+        },
+      ]);
     }
 
   return (
@@ -202,28 +218,45 @@ export default function CreatePost() {
         </ScrollView>
 
         <Text style={formStyles.Label}>Times Available</Text>
-        <View>
-            <Dropdown style={formStyles.Dropdown}
-            data={days}
-            labelField="label"
-            valueField="value"
-            value={dayOfWeek}
-            onChange={(item) => setDayOfWeek(item.value)}
+
+        {timeSlots.map((slot, index) => (
+          <View key={index}>
+            <Text style={formStyles.Label}>
+              Availability {index + 1}
+            </Text>
+
+            <Dropdown
+              style={formStyles.Dropdown}
+              data={days}
+              labelField="label"
+              valueField="value"
+              value={slot.day_of_week}
+              onChange={(item) =>
+                updateTimeSlot(index, "day_of_week", item.value)
+              }
             />
 
-            <Text style={formStyles.Label}>Start time</Text>
-            <TextInput style={formStyles.Input}
-            placeholder="Example: 09:00:00"
-            value={startTime}
-            onChangeText={setStartTime}
+            <TextInput
+              style={formStyles.Input}
+              placeholder="Start time, example: 09:00:00"
+              value={slot.start_time}
+              onChangeText={(value) =>
+                updateTimeSlot(index, "start_time", value)
+              }
             />
-        </View>
-        <Text style={formStyles.Label}>End time</Text>
-        <TextInput style={formStyles.Input}
-          placeholder="Example: 12:00:00"
-          value={endTime}
-          onChangeText={setEndTime}
-        />
+
+            <TextInput
+              style={formStyles.Input}
+              placeholder="End time, example: 12:00:00"
+              value={slot.end_time}
+              onChangeText={(value) =>
+                updateTimeSlot(index, "end_time", value)
+              }
+            />
+          </View>
+        ))}
+
+        <Button title="Add Another Time" onPress={addTimeSlot} />
 
         <View style={formStyles.Button}>
           <Button title="Create Post" onPress={createPost}/>
