@@ -13,13 +13,13 @@ const API_URL = "http://10.1.10.149:3000"; // get ip with ipconfig getifaddr en0
 
 export default function CustomerView() {
   const router = useRouter();
-  const customerId = 2;
+  const userId = 2;
   const [activeTab, setActiveTab] = useState<"current" | "old">("current");
   const [posts, setPosts] = useState<Post[]>([]);
   
   const loadPosts = useCallback(async () => {
   try {
-    const url = `${API_URL}/api/customers/${customerId}/posts`;
+    const url = `${API_URL}/api/posts/user/${userId}`;
 
     console.log("Fetching:", url);
 
@@ -37,7 +37,7 @@ export default function CustomerView() {
   } catch (error) {
     console.error("Error loading posts:", error);
   }
-}, [customerId]);
+}, [userId]);
 
 useFocusEffect(
   useCallback(() => {
@@ -94,6 +94,7 @@ useFocusEffect(
 
 function PostDisplay({ post }: { post: Post }) {
   const [imageIndex, setImageIndex] = useState(0);
+  const router = useRouter();
   
   function showPreviousImage() {
     setImageIndex((currentIndex) =>
@@ -118,6 +119,15 @@ function PostDisplay({ post }: { post: Post }) {
 
   return (
     <View style={customerStyles.PostFrame}>
+      <Pressable
+        onPress={() =>
+          router.push({pathname: "/edit-post",
+            params: {postId: String(post.post_id)},
+          })
+        }
+      >
+        <Text>Edit</Text>
+      </Pressable>
       <View style={customerStyles.PostTextFrame}>
         <Text style={customerStyles.PostTextHeading}>
         Pickup information

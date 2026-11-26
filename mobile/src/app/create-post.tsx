@@ -12,7 +12,7 @@ const API_URL = "http://10.1.10.149:3000"; // get ip with ipconfig getifaddr en0
 export default function CreatePost() {
     const router = useRouter();
 
-    const customerId = 2;
+    const userId = 2;
 
     const [price, setPrice] = useState("");
     const [description, setDescription] = useState("");
@@ -72,7 +72,7 @@ export default function CreatePost() {
 
         try {
             const response = await fetch(
-                `${API_URL}/api/customers/${customerId}/posts`,
+                `${API_URL}/api/posts/user/${userId}`,
                 {
                     method: "POST",
                     headers: {"Content-Type": "application/json"},

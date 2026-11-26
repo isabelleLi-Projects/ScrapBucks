@@ -1,15 +1,15 @@
 import { ResultSetHeader } from "mysql2";
 import { db } from "../config/database";
-import { Controller, Get, Param, BadRequestException, Post, Body, InternalServerErrorException } from "@nestjs/common";
+import { Controller, Get, Param, BadRequestException, Post, Body, InternalServerErrorException, Patch } from "@nestjs/common";
 
-@Controller("api/customers")
+@Controller("api/posts")
 export class PostController {
 
-  @Get(":customerId/posts")
-  async getCustomerPosts(@Param("customerId") customerIdParam: string) {
-    const customerId = Number(customerIdParam);
+  @Get("user/:userId")
+  async getUserPosts(@Param("userId") userIdParam: string) {
+    const userId = Number(userIdParam);
 
-    if (Number.isNaN(customerId)) {
+    if (Number.isNaN(userId)) {
       throw new BadRequestException("Invalid customer ID");
     }
 
@@ -19,9 +19,8 @@ export class PostController {
         (SELECT JSON_ARRAYAGG(JSON_OBJECT('day_of_week', ta.day_of_week, 'start_time', ta.start_time,'end_time', ta.end_time)) FROM TimeAvailable ta WHERE ta.post_id = p.post_id) AS time_slots
       FROM Posts p
       WHERE p.posted_by = ?
-      GROUP BY p.post_id
       ORDER BY p.post_id DESC`,
-      [customerId]
+      [userId]
     );
 
     const posts = (rows as any[]).map((row) => ({
@@ -50,16 +49,33 @@ export class PostController {
     return posts;
   }
 
-  @Post(":customerId/posts")
-  async createPost(@Param("customerId") customerIdParam: string, @Body() body: any,) {
-    const customerId = Number(customerIdParam);
+  @Get(":postId")
+  async getPost(@Param("postId") postIdParam: string) {
+    const postId = Number(postIdParam);
 
-    if (Number.isNaN(customerId)) {
-      throw new BadRequestException("Invalid customer ID");
+    const [rows] = await db.query<any[]>(
+      `SELECT p.price, p.description, p.address_line, p.city, p.state, p.zip_code, p.pickup_notes, p.delivery_instruction,
+        (SELECT JSON_ARRAYAGG(JSON_OBJECT('url', pp.photo_url,'publicId', pp.cloudinary_public_id)) FROM PostPhotos pp WHERE pp.post_id = p.post_id) AS photos,
+        (SELECT JSON_ARRAYAGG(JSON_OBJECT('day_of_week', ta.day_of_week, 'start_time', ta.start_time,'end_time', ta.end_time)) FROM TimeAvailable ta WHERE ta.post_id = p.post_id) AS time_slots
+      FROM Posts p
+      WHERE p.post_id = ?
+      LIMIT 1`,
+      [postId],
+    );
+
+    return rows[0];
+  }
+
+  @Post("user/:userId")
+  async createPost(@Param("userId") userIdParam: string, @Body() body: any,) {
+    const userId = Number(userIdParam);
+
+    if (Number.isNaN(userId)) {
+      throw new BadRequestException("Invalid user ID");
     }
 
     console.log([
-        customerId,
+        userId,
         body.price,
         body.description,
         body.address_line,
@@ -85,7 +101,7 @@ export class PostController {
             pickup_notes, delivery_instruction, has_driver, is_picked_up)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, false, false)`,
           [
-            customerId, price, description, address_line, city, state,
+            userId, price, description, address_line, city, state,
             zip_code, latitude, longitude, pickup_notes, delivery_instruction,
           ],
         );
@@ -131,5 +147,37 @@ export class PostController {
     } finally {
       connection.release();
     }
+  }
+
+  @Patch(":postId")
+  async updatePost(
+    @Param("postId") postIdParam: string,
+    @Body() body: any,
+  ) {
+    const postId = Number(postIdParam);
+
+    await db.query(
+      `
+      UPDATE Posts
+      SET price = ?, description = ?, address_line = ?, city = ?, state = ?, zip_code = ?, latitude = ?, longitude = ?, 
+          pickup_notes = ?, delivery_instruction = ?
+      WHERE post_id = ?
+      `,
+      [
+        body.price,
+        body.description,
+        body.address_line,
+        body.city,
+        body.state,
+        body.zip_code,
+        body.latitude,
+        body.longitude,
+        body.pickup_notes,
+        body.delivery_instruction,
+        postId,
+      ],
+    );
+
+    return { message: "Post updated successfully" };
   }
 }
