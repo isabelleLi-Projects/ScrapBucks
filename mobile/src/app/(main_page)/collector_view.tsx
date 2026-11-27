@@ -1,13 +1,20 @@
 import MapView, { Marker, PROVIDER_GOOGLE, Region } from "react-native-maps";
-import {Button, Modal, Pressable, ScrollView, StyleSheet, Text, View,} from "react-native";
+import {Button, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View} from "react-native";
 import { useState, useEffect, useRef } from "react";
 import { styles } from "../../hooks/styles";
 import { Profile } from "../../components/profile";
 import { distanceInMiles } from "../../utils/radiusCalc"  
-import { RecyclingLocations } from "../../../../shared/types/recyclingLocations";
+import { RecyclingLocations, RadiusOption } from "../../../../shared/types/recyclingLocations";
 import * as Location from "expo-location";
 import { BlurView } from "expo-blur";
 import Slider from "@react-native-community/slider";
+import { DEFAULT_REGION, DEFAULT_RADIUS_MILES, radiusOptions } from "../../../constants";
+import { MapMarkers } from "../../components/map-markers";
+import { DistanceFilter, DistanceFilterPopup } from "../../components/distance-filter";
+import {FullMap} from "../../components/full-map";
+import { useMapPressHandlers } from "@/hooks/use-map-press-handlers";
+
+
 
 
 
@@ -17,26 +24,18 @@ export default function CollectorView() {
   const [visibleLocations, setVisibleLocations] = useState<RecyclingLocations[]>([])
   const [userRegion, setUserRegion] = useState<Region | null>(null);
   const [hasLocationPermission, setHasLocationPermission] = useState<boolean | null>(null);
-  const DEFAULT_REGION: Region = {
-    // 93307 area code (has most recycling locations)
-    latitude: 35.294058225349104,
-    longitude: -118.9755342951712,
-    latitudeDelta: 0.05,
-    longitudeDelta: 0.05,
-  };
-  const DEFAULT_RADIUS_MILES = 10;
-  const radiusOptions = [
-    { label: "2 blocks", miles: 0.1 },
-    { label: "6 blocks", miles: 0.3 },
-    { label: "1 mile", miles: 1 },
-    { label: "3 miles", miles: 3 },
-  ];
+  
   const [selectedRadius, setSelectedRadius] = useState(DEFAULT_RADIUS_MILES); 
   const [distanceModalVisible, setDistanceModalVisible] = useState(false);
   const [pendingRadius, setPendingRadius] = useState(selectedRadius);
-  const mapRegion = userRegion ?? DEFAULT_REGION;
   const locationLabel = hasLocationPermission === true ? "your location" : "bakersfield default area";
 
+  const [isMapFullScreen, setMapFullScreen] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<RecyclingLocations | null>(null);
+  const routeStart = userRegion ?? DEFAULT_REGION;
+
+  const [currentMapRegion, setCurrentMapRegion] = useState<Region>(DEFAULT_REGION);
+ 
   
   useEffect(() =>{
     async function fetchLocations() {
@@ -99,162 +98,10 @@ export default function CollectorView() {
     }
     showNearbyLocations(DEFAULT_RADIUS_MILES);
   }, [userRegion, locations])
-  
-    return (
-      <View style={styles.container}>
-        <Profile />
-        <Text style={collectorStyles.title}>Collector</Text>
 
-        <View style={collectorStyles.radiusContainer}>
-          <Pressable style={collectorStyles.radiusTab}
-            onPress={() => {
-              setPendingRadius(selectedRadius);
-              setDistanceModalVisible(true);
-            }}
-          >
-            <Text style={collectorStyles.radiusText}>
-              Recycling Locations Distance:
-              {/* Find recycling locations: {selectedRadius.toFixed(1)} miles of {locationLabel} */}
-            </Text>
-            <Text style={collectorStyles.chevron}>⌄</Text>
-          </Pressable>
-        </View>
-
-        <Modal
-          visible={distanceModalVisible}
-          transparent={true}
-          animationType="none"
-          onRequestClose={() => setDistanceModalVisible(false)}
-        >
-          
-          <View style={collectorStyles.modalContainer}>
-            <BlurView
-              intensity={25}
-              tint="dark"
-              style={StyleSheet.absoluteFill}
-            />
-            <Pressable
-              style={collectorStyles.darkOverlay}
-              onPress={() => setDistanceModalVisible(false)}
-            />
-            <View style={collectorStyles.bottomSheet}>
-              <View style={collectorStyles.sheetHandle}/>
-              <View style={collectorStyles.sheetHeader}>
-                <Text style={collectorStyles.sheetTitle}>
-                  Recycling Locations Distance
-                </Text>
-
-                <Pressable
-                  onPress={() => setDistanceModalVisible(false)}
-                >
-                  <Text style={collectorStyles.closeButton}>×</Text>
-                </Pressable>
-              </View>
-
-              <View style={collectorStyles.optionsContainer}>
-                {radiusOptions.map((option) => (
-                  <Pressable
-                    key={option.label}
-                    style={[
-                      collectorStyles.radiusOption,
-                      pendingRadius === option.miles &&
-                        collectorStyles.selectedRadiusOption,
-                    ]}
-                    onPress={() => setPendingRadius(option.miles)}
-                  >
-                    <Text
-                      style={[
-                        collectorStyles.radiusOptionText,
-                        pendingRadius === option.miles &&
-                          collectorStyles.selectedRadiusText,
-                      ]}
-                    >
-                      {option.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-
-              <View style={collectorStyles.sliderSection}>
-                {/* <Text style={collectorStyles.sliderTitle}>
-                  Distance
-                </Text> */}
-
-                <Text style={collectorStyles.sliderValue}>
-                  {pendingRadius.toFixed(1)} miles
-                </Text>
-
-                <Slider
-                  style={collectorStyles.slider}
-                  minimumValue={0}
-                  maximumValue={50}
-                  step={0.1}
-                  value={pendingRadius}
-                  minimumTrackTintColor="#cef2bb"
-                  maximumTrackTintColor="#D9D9D9"
-                  thumbTintColor="#8DBF96"
-                  onValueChange={(value) => setPendingRadius(value)}
-                />
-
-                <View style={collectorStyles.sliderLabels}>
-                  <Text>0 mi</Text>
-                  <Text>50 mi</Text>
-                </View>
-              </View>
-              <Pressable
-                style={collectorStyles.applyButton}
-                onPress={() => {
-                  setSelectedRadius(pendingRadius);
-                  setDistanceModalVisible(false);
-                  showNearbyLocations(pendingRadius);
-                }}
-              >
-                <Text style={collectorStyles.applyText}>
-                  Apply
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        </Modal>
-        
-        <View style={collectorStyles.mapFrame}>
-          <MapView
-            ref={mapRef}
-            //provider={PROVIDER_GOOGLE}
-            style={collectorStyles.map}
-            initialRegion={mapRegion}
-            showsUserLocation={true}
-          >
-  
-            {visibleLocations.map((location) => (
-              <Marker
-                
-                key={location.recycling_location_id ?? location.calrecycle_id}
-                coordinate={{
-                  latitude: Number(location.latitude),
-                  longitude: Number(location.longitude),
-                }}
-                title={location.facility_name}
-                description={`${location.recycle_address}, ${location.city}, ${location.zip_code}`}
-              />
-            ))}
-          </MapView>
-          <Text style={collectorStyles.radiusText}> 
-              Recycling Locations {selectedRadius.toFixed(1)} miles of {locationLabel}
-          </Text>
-    </View>
-
-      
-    
-    <Text style={collectorStyles.title}>Accepted Pickups</Text>
-      <View style={collectorStyles.pickupFrame}>
-          <ScrollView>
-            <Pickup/>
-            <Pickup/>
-          </ScrollView>
-      </View>
-    </View>
-    );
+  useEffect(() => {
+    console.log("Selected location:", selectedLocation);
+  }, [selectedLocation]);
 
   function fitByLocations(locationToFit: RecyclingLocations[]) {
     
@@ -306,7 +153,173 @@ export default function CollectorView() {
     setVisibleLocations(nearbyLocations);
     fitByLocations(nearbyLocations);
   }
+  
+  return (
+    <View style={styles.container}>
+      <Profile />
+
+      <Text style={collectorStyles.title}>
+        Collector
+      </Text>
+
+      <DistanceFilter
+        pendingRadius={pendingRadius}
+        radiusOptions={radiusOptions}
+        modalVisible={distanceModalVisible}
+        onOpen={() => {
+          setPendingRadius(selectedRadius);
+          setDistanceModalVisible(true);
+        }}
+        onClose={() => setDistanceModalVisible(false)}
+        onPendingRadiusChange={setPendingRadius}
+        onApply={() => {
+          setSelectedRadius(pendingRadius);
+          setDistanceModalVisible(false);
+          showNearbyLocations(pendingRadius);
+        }}
+      />
+      <DistanceFilterPopup
+        modalVisible={distanceModalVisible}
+        radiusOptions={radiusOptions}
+        onOpen={() => setDistanceModalVisible(true)}
+        onClose={() => setDistanceModalVisible(false)}
+        pendingRadius={pendingRadius}
+        onPendingRadiusChange={setPendingRadius}
+        onApply={() => {
+          setSelectedRadius(pendingRadius);
+          setDistanceModalVisible(false);
+          showNearbyLocations(pendingRadius);
+        }}
+      />
+
+      <SmallViewMap
+        mapRef={mapRef}
+        locations={visibleLocations}
+        selectedLocation = {selectedLocation}
+        mapRegion={userRegion ?? DEFAULT_REGION}
+        onSelectLocation={setSelectedLocation}
+        onRegionChangeComplete={setCurrentMapRegion}
+        onClearSelection={() => setSelectedLocation(null)}
+        onOpenFullScreen={() => setMapFullScreen(true)}
+      />
+
+      <FullMap
+        isVisible={isMapFullScreen}
+        mapRegion={currentMapRegion}
+        locations={visibleLocations}
+        selectedLocation={selectedLocation}
+        selectedRadius={selectedRadius}
+        pendingRadius={pendingRadius}
+        radiusOptions={radiusOptions}
+        modalVisible={distanceModalVisible}
+        onSelectLocation={setSelectedLocation}
+        onClearSelection={() => setSelectedLocation(null)} 
+        onClose={() => setMapFullScreen(false)}
+        onOpenDistanceFilter={() => {
+          setPendingRadius(selectedRadius);
+          setDistanceModalVisible(true);
+        }}
+        onCloseDistanceFilter={() =>
+          setDistanceModalVisible(false)
+        }
+        onRadiusChange={setPendingRadius}
+        onApplyDistanceFilter={() => {
+          setSelectedRadius(pendingRadius);
+          setDistanceModalVisible(false);
+          showNearbyLocations(pendingRadius);
+        }}
+        
+      />
+       
+       
+
+      <Text style={collectorStyles.title}>
+        Accepted Pickups
+      </Text>
+      <PickupList />
+    </View>
+  );
 }
+
+
+
+
+
+
+function SmallViewMap({
+  mapRef,
+  locations,
+  selectedLocation,
+  mapRegion,
+  onSelectLocation,
+  onRegionChangeComplete,
+  onClearSelection,
+  onOpenFullScreen,
+}: {
+  mapRef: React.RefObject<MapView | null>;
+  locations: RecyclingLocations[];
+  selectedLocation: RecyclingLocations | null;
+  mapRegion: Region;
+  onSelectLocation: (
+    location: RecyclingLocations
+  ) => void;
+  onClearSelection: () => void;
+  onRegionChangeComplete: (region: Region) => void;
+  onOpenFullScreen: () => void;
+}) {
+  const {
+    handleMarkerPress,
+    handleMapPress,
+  } = useMapPressHandlers(
+    onSelectLocation,
+    onClearSelection
+  );
+  return (
+    <View style={collectorStyles.mapFrame}>
+      <MapView
+        onMarkerPress={(event) => {
+          const markerId = event.nativeEvent.id;
+      
+          const location = locations.find(
+            (item) =>
+              String(item.recycling_location_id) === markerId
+          );
+      
+          if (location) {
+            handleMarkerPress(location);
+          }
+        }}
+        onPress={handleMapPress}
+        ref={mapRef}
+        style={collectorStyles.map}
+        // onPress={handleMapPress}
+        initialRegion={mapRegion}
+        onRegionChangeComplete={onRegionChangeComplete}
+        showsUserLocation={true}
+      >
+        <MapMarkers
+          locations={locations}
+          selectedLocation={selectedLocation}
+          onSelectLocation={handleMarkerPress}
+          showSelectedCallout={false}
+        />
+      </MapView>
+      <Pressable
+        style={collectorStyles.fullScreenButton}
+        onPress={onOpenFullScreen}
+      >
+        <Text style={collectorStyles.fullScreenButtonText}>
+          ⛶
+        </Text>
+      </Pressable>
+
+    </View>
+  );
+}
+
+
+
+
 
 
 function Pickup() {
@@ -316,8 +329,21 @@ function Pickup() {
     </View>
   );
 }
+function PickupList() {
+  return (
+    <View style={collectorStyles.pickupFrame}>
+      <ScrollView>
+        <Pickup />
+        <Pickup />
+      </ScrollView>
+    </View>
+  );
+}
 
-const collectorStyles = StyleSheet.create({
+
+
+
+export const collectorStyles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "bold",
@@ -364,6 +390,9 @@ const collectorStyles = StyleSheet.create({
     fontSize: 20,
     marginLeft: 12,
     color: "#555555",
+  },
+  markerWrapper: {
+    alignItems: "center",
   },
   radiusTab: {
     minWidth: 100,
@@ -499,6 +528,143 @@ const collectorStyles = StyleSheet.create({
     fontSize: 16,
     color: "#333333",
   },
+  backButton: {
+    position: "absolute",
+    top: 60,
+    left: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#000000",
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  
+  backButtonText: {
+    marginTop: -5,
+    fontSize: 42,
+    color: "#222222",
+  },
+  fullScreenContainer: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+  locationCard: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 35,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: -4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  
+  locationTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#222222",
+  },
+  
+  locationAddress: {
+    marginTop: 6,
+    fontSize: 15,
+    color: "#555555",
+  },
+  
+  directionsButton: {
+    height: 54,
+    marginTop: 20,
+    borderRadius: 27,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#ABEEBD",
+  },
+  
+  directionsText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#222222",
+  },
+  fullScreenButton: {
+    position: "absolute",
+    right: 12,
+    bottom: 12,
+    width: 30,
+    height: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: 'transparent',
+    elevation: 5,
+  },
+  
+  fullScreenButtonText: {
+    fontSize: 25,
+    color: "#222222",
+  },
+
+  fullScreenRadiusButton: {
+    position: "absolute",
+    top: 60,
+    right: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 22,
+    backgroundColor: "#FFFFFF",
+    elevation: 5,
+  },
+  
+  filterButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#222222",
+  },
+  disabledDirectionsButton: {
+    opacity: 0.,
+  },
+  callout: {
+    minWidth: 240,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+  },
+  
+  calloutTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#111111",
+  },
+  
+  calloutAddress: {
+    marginTop: 6,
+    fontSize: 14,
+    color: "#333333",
+  },
+  
+  markerIcon: {
+    fontSize: 28,
+  },
+  markerTouchArea: {
+    width: 50,
+    height: 50,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  
   
   
 });

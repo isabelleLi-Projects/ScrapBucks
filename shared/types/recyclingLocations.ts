@@ -11,3 +11,8 @@ export interface RecyclingLocations {
   recycle_address: string;
   phone?: string;
 }
+
+export type RadiusOption = {
+  label: string;
+  miles: number;
+};
