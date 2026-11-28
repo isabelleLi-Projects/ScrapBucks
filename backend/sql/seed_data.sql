@@ -11,8 +11,8 @@ VALUES
 -- Posts
 INSERT INTO Posts
 (price, description, address_line, city, state, zip_code,
- latitude, longitude, pickup_notes, delivery_instruction,
- has_driver, is_picked_up, posted_by, driver_id)
+  latitude, longitude, pickup_notes, delivery_instruction, post_status, expires_at,
+  has_driver, is_picked_up, posted_by, driver_id)
 VALUES
 (
   15.00,
@@ -25,6 +25,11 @@ VALUES
   -121.88630000,
   'Please pick up near the front door',
   'knock please',
+  'active',
+  CONCAT(
+    DATE_ADD(CURDATE(), INTERVAL (6 - WEEKDAY(CURDATE())) DAY),
+    ' 23:59:59'
+  ),
   TRUE,
   FALSE,
   1,
@@ -41,6 +46,8 @@ VALUES
   -121.89100000,
   'Call when you arrive',
   'pickup outside',
+  'expired',
+  DATE_SUB(NOW(), INTERVAL 1 DAY),
   FALSE,
   FALSE,
   1,
@@ -57,6 +64,8 @@ VALUES
   -121.95520000,
   'Pickup is available after 5 PM',
   'pickup outside',
+  'archived',
+  DATE_SUB(NOW(), INTERVAL 7 DAY),
   TRUE,
   TRUE,
   3,

@@ -3,12 +3,14 @@ export interface Post {
   post_id: number;
   price: number;
   description: string;  // ex. number of cans/bags, weight of recyclables, type of recyclables (glass, aluminum cans, etc)
-  pickup_location: PickupLocation; // should this be a string????
+  pickup_location: PickupLocation; 
   pickup_notes: string;
   time_slots: TimeSlot[];
   photos: string[];
   delivery_instruction: "outside pickup" | "knock please";
-  status: PickupStatus;
+  pickup_status: PickupStatus;
+  post_status: PostStatus;
+  expires_at: string;
 }
 
 export type PickupStatus =
@@ -35,6 +37,9 @@ type PickupLocation = {
   latitude: number;
   longitude: number;
 };
+
+export type PostStatus = "active" | "expired" | "archived";
+
 
 export const days = [
   { label: "Monday", value: 1 },

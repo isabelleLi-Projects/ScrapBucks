@@ -6,9 +6,10 @@ import { RecyclingLocationsController } from './controller/calRecycle.controller
 import { RecyclingLocationsService } from './services/recyclingLocation.service';
 import { AuthController } from './controller/auth.controller';
 import { AuthService } from './services/auth.service';
+import { PostExpirationService } from './services/post-expiration.service';
 @Module({
   imports: [],
   controllers: [AppController, PostController, RecyclingLocationsController, AuthController],
-  providers: [AppService, RecyclingLocationsService, AuthService],
+  providers: [AppService, RecyclingLocationsService, AuthService, PostExpirationService],
 })
 export class AppModule {}

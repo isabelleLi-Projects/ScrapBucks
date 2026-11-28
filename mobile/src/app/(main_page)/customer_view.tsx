@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { StyleSheet, View, Image, Text, ScrollView, Pressable, Button } from "react-native";
+import { StyleSheet, View, Image, Text, ScrollView, Pressable, Button, Modal, Alert } from "react-native";
 import { styles } from "../../hooks/styles"
 import { Profile } from "../../components/profile"
 import { Post, PickupStatus, days } from "../../../../shared/types/post";
@@ -14,7 +14,7 @@ const API_URL = "http://10.1.10.149:3000"; // get ip with ipconfig getifaddr en0
 export default function CustomerView() {
   const router = useRouter();
   const userId = 2;
-  const [activeTab, setActiveTab] = useState<"current" | "old">("current");
+  const [activeTab, setActiveTab] = useState<"current" | "archived">("current");
   const [posts, setPosts] = useState<Post[]>([]);
   
   const loadPosts = useCallback(async () => {
@@ -45,10 +45,32 @@ useFocusEffect(
   }, [loadPosts])
 );
 
-  const currentPosts = posts.filter((post) => post.status !== "pickedUp");
-  const archivedPosts = posts.filter((post) => post.status === "pickedUp");
+  const currentPosts = posts.filter((post) => post.post_status !== "archived");
+  const archivedPosts = posts.filter((post) => post.post_status === "archived");
 
   const postsToDisplay = activeTab === "current" ? currentPosts : archivedPosts;
+
+  async function archivePost(postId: number) {
+    try {
+      const response = await fetch(
+        `${API_URL}/api/posts/${postId}/archive`,
+        {
+          method: "PATCH",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Could not archive post");
+      }
+
+      setPosts((currentPosts) =>
+        currentPosts.filter((post) => post.post_id !== postId)
+      );
+    } catch (error) {
+      console.error("Error archiving post:", error);
+      Alert.alert("Error", "Could not archive post.");
+    }
+  }
 
     return (
         <View style={styles.container}>
@@ -65,17 +87,22 @@ useFocusEffect(
                 ]}>Current</Text>
               </Pressable>
               <Pressable
-                style={[customerStyles.Tab, activeTab === "old" && customerStyles.ActiveOldTab,]}
-                onPress={() => setActiveTab("old")}
+                style={[customerStyles.Tab, activeTab === "archived" && customerStyles.ActiveOldTab,]}
+                onPress={() => setActiveTab("archived")}
               >
                 <Text style={[ customerStyles.TabText,
-                  activeTab === "old" && customerStyles.ActiveTabText,
+                  activeTab === "archived" && customerStyles.ActiveTabText,
                 ]}>Archived</Text>
               </Pressable>
             </View>
           </View>
             
           <ScrollView style={customerStyles.PostContainer} showsVerticalScrollIndicator={false}>
+            {activeTab === "archived" && archivedPosts.length === 0 && (
+              <View style={customerStyles.EmptyPostContainer}>
+                <Text style={customerStyles.EmptyPostText}>You do not have any archived posts.</Text>
+              </View>
+            )}
             {activeTab === "current" && currentPosts.length === 0 ? (
               <View style={customerStyles.EmptyPostContainer}>
                 <Text style={customerStyles.EmptyPostText}>You do not have a current post.</Text>
@@ -83,7 +110,7 @@ useFocusEffect(
               </View>
             ) : (
               postsToDisplay.map((post) => (
-                <PostDisplay key={post.post_id} post={post} />
+                <PostDisplay key={post.post_id} post={post} onArchive={archivePost}/>
               ))
             )}
           </ScrollView>
@@ -92,7 +119,7 @@ useFocusEffect(
     );
 }
 
-function PostDisplay({ post }: { post: Post }) {
+function PostDisplay({post, onArchive}: {post: Post; onArchive: (postId: number) => void;}) {
   const [imageIndex, setImageIndex] = useState(0);
   const router = useRouter();
   
@@ -116,23 +143,63 @@ function PostDisplay({ post }: { post: Post }) {
   const today = javascriptDay === 0 ? 7 : javascriptDay;
   const [selectedDay, setSelectedDay] = useState(today);
   const selectedTimeSlots = post.time_slots.filter((slot) => slot.day_of_week === selectedDay);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   return (
     <View style={customerStyles.PostFrame}>
-      <Pressable
-        onPress={() =>
-          router.push({pathname: "/edit-post",
-            params: {postId: String(post.post_id)},
-          })
-        }
-      >
-        <Text>Edit</Text>
-      </Pressable>
+      {post.post_status !== "archived" && (
+        <>
+          <Pressable style={customerStyles.moreButton}
+            onPress={() => setMenuVisible((visible) => !visible)}
+          >
+            <Text style={customerStyles.moreText}>⋮</Text>
+          </Pressable>
+
+          {menuVisible && (
+            <>
+              <Pressable style={customerStyles.menuBackdrop} onPress={() => setMenuVisible(false)}/>
+              <View style={customerStyles.menu}>
+                <Pressable
+                  style={customerStyles.menuItem}
+                  onPress={() => {
+                    setMenuVisible(false);
+                    router.push({pathname: "/edit-post", params: {postId: String(post.post_id)},});
+                  }}
+                >
+                  <Text>Edit post</Text>
+                </Pressable>
+
+                <Pressable
+                  style={customerStyles.menuItem}
+                  onPress={() => {
+                    setMenuVisible(false);
+                    onArchive(post.post_id);
+                  }}
+                >
+                  <Text>Archive post</Text>
+                </Pressable>
+              </View>
+            </>
+          )}
+        </>
+      )}
+
       <View style={customerStyles.PostTextFrame}>
         <Text style={customerStyles.PostTextHeading}>
         Pickup information
         </Text>
         <ScrollView showsVerticalScrollIndicator={false}>
+
+        {post.post_status === "active" && post.expires_at && (
+          <Text style={customerStyles.PostTextBody}>
+            Expires {formatExpiration(post.expires_at)}
+          </Text>
+        )}
+
+        {post.post_status === "expired" && (
+          <Text style={customerStyles.PostTextBody}>This post has expired</Text>
+        )}
+
         <Text style={customerStyles.PostTextBody}>
           Price: ${post.price}
         </Text>
@@ -221,7 +288,8 @@ function PostDisplay({ post }: { post: Post }) {
           </Text>
         </View>
       </View>
-      <ProgressTracker status={post.status} />
+      <ProgressTracker status={post.pickup_status} />
+
     </View>
   );
 }
@@ -270,6 +338,18 @@ function ProgressTracker({ status }: { status: PickupStatus }) {
       })}
     </View>
   );
+}
+
+function formatExpiration(dateValue: string) {
+  const date = new Date(dateValue.replace(" ", "T"));
+
+  return date.toLocaleString([], {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 const customerStyles = StyleSheet.create({
@@ -346,6 +426,7 @@ const customerStyles = StyleSheet.create({
   },
 
   PostFrame: {
+    position: "relative",
     width: "95%",
     // minHeight: 300,
     height: 500,
@@ -467,110 +548,152 @@ const customerStyles = StyleSheet.create({
     color: "#29445C",
   },
   ProgressTracker: {
-  flexDirection: "row",
-  width: "100%",
-  marginTop: 20,
-},
+    flexDirection: "row",
+    width: "100%",
+    marginTop: 20,
+  },
 
-ProgressStep: {
-  flex: 1,
-  alignItems: "center",
-},
+  ProgressStep: {
+    flex: 1,
+    alignItems: "center",
+  },
 
-CircleAndLine: {
-  marginLeft: 70,
-  width: "100%",
-  flexDirection: "row",
-  alignItems: "center",
-},
+  CircleAndLine: {
+    marginLeft: 70,
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+  },
 
-ProgressCircle: {
-  width: 20,
-  height: 20,
-  alignItems: "center",
-  justifyContent: "center",
-  borderRadius: 13,
-  backgroundColor: "#D9E1E8",
-  borderWidth: 2,
-  borderColor: "#B7C9D8",
-},
+  ProgressCircle: {
+    width: 20,
+    height: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 13,
+    backgroundColor: "#D9E1E8",
+    borderWidth: 2,
+    borderColor: "#B7C9D8",
+  },
 
-CompletedCircle: {
-  backgroundColor: "#DDF3D1",
-  borderColor: "#8DBF96",
-},
+  CompletedCircle: {
+    backgroundColor: "#DDF3D1",
+    borderColor: "#8DBF96",
+  },
 
-// Checkmark: {
-//   fontSize: 14,
-//   fontWeight: "700",
-//   color: "#29445C",
-// },
+  // Checkmark: {
+  //   fontSize: 14,
+  //   fontWeight: "700",
+  //   color: "#29445C",
+  // },
 
-ProgressLine: {
-  flex: 1,
-  height: 3,
-  backgroundColor: "#D9E1E8",
-},
+  ProgressLine: {
+    flex: 1,
+    height: 3,
+    backgroundColor: "#D9E1E8",
+  },
 
-CompletedLine: {
-  backgroundColor: "#8DBF96",
-},
+  CompletedLine: {
+    backgroundColor: "#8DBF96",
+  },
 
-ProgressLabel: {
-  marginTop: 7,
-  fontSize: 11,
-  textAlign: "center",
-  color: "#526575",
-},
-TimeHeader: {
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "space-between",
-  width: "100%",
-  marginVertical: 8,
-},
+  ProgressLabel: {
+    marginTop: 7,
+    fontSize: 11,
+    textAlign: "center",
+    color: "#526575",
+  },
+  TimeHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+    marginVertical: 8,
+  },
 
-Dropdown: {
-  width: 145,
-  height: 30,
-  paddingHorizontal: 12,
-  borderRadius: 10,
-  borderWidth: 1,
-  borderColor: "#B7C9D8",
-  backgroundColor: "#DCEEFF",
-},
+  Dropdown: {
+    width: 145,
+    height: 30,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#B7C9D8",
+    backgroundColor: "#DCEEFF",
+  },
 
-DropdownMenu: {
-  borderRadius: 10,
-  backgroundColor: "#FFFFFF",
-  borderWidth: 1,
-  borderColor: "#B7C9D8",
-},
-DropdownItem: {
-  height: 50,
-  paddingVertical: 0,
-  justifyContent: "center",
-},
-DropdownItemText: {
-  fontSize: 14,
-  lineHeight: 14,
-  color: "#29445C",
-},
-DropdownText: {
-  fontSize: 14,
-  color: "#29445C",
-},
+  DropdownMenu: {
+    borderRadius: 10,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#B7C9D8",
+  },
+  DropdownItem: {
+    height: 50,
+    paddingVertical: 0,
+    justifyContent: "center",
+  },
+  DropdownItemText: {
+    fontSize: 14,
+    lineHeight: 14,
+    color: "#29445C",
+  },
+  DropdownText: {
+    fontSize: 14,
+    color: "#29445C",
+  },
 
-EmptyPostContainer: {
-  alignItems: "center",
-  justifyContent: "center",
-  padding: 30,
-},
+  EmptyPostContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 30,
+  },
 
-EmptyPostText: {
-  marginBottom: 15,
-  fontSize: 16,
-  color: "#29445C",
-},
+  EmptyPostText: {
+    marginBottom: 15,
+    fontSize: 16,
+    color: "#29445C",
+  },
 
+  moreButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 20,
+    elevation: 20,
+    padding: 8,
+  },
+
+  moreText: {
+    fontSize: 26,
+    fontWeight: "bold",
+    color: "#29445C",
+  },
+
+  menu: {
+    position: "absolute",
+    top: 48,
+    right: 10,
+    zIndex: 30,
+    elevation: 30,
+    width: 150,
+    backgroundColor: "white",
+    borderRadius: 10,
+    paddingVertical: 5,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+  },
+
+  menuItem: {
+    padding: 14,
+  },
+
+  menuBackdrop: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    zIndex: 25,
+  },
 });

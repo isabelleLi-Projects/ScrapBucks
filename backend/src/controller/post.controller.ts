@@ -15,7 +15,7 @@ export class PostController {
     }
 
     const [rows] = await db.query(
-      `SELECT p.post_id, p.price, p.description, p.address_line, p.city, p.state, p.zip_code, p.latitude, p.longitude, p.pickup_notes, p.delivery_instruction, p.has_driver, p.is_picked_up,
+      `SELECT p.post_id, p.price, p.description, p.address_line, p.city, p.state, p.zip_code, p.latitude, p.longitude, p.pickup_notes, p.delivery_instruction, p.post_status, p.expires_at, p.has_driver, p.is_picked_up,
         (SELECT JSON_ARRAYAGG(pp.photo_url) FROM PostPhotos pp WHERE pp.post_id = p.post_id) AS photos,
         (SELECT JSON_ARRAYAGG(JSON_OBJECT('day_of_week', ta.day_of_week, 'start_time', ta.start_time,'end_time', ta.end_time)) FROM TimeAvailable ta WHERE ta.post_id = p.post_id) AS time_slots
       FROM Posts p
@@ -40,17 +40,19 @@ export class PostController {
       time_slots: typeof row.time_slots === "string" ? JSON.parse(row.time_slots) : row.time_slots ?? [],
       photos: typeof row.photos === "string" ? JSON.parse(row.photos) : row.photos ?? [],
       delivery_instruction: row.delivery_instruction,
-      status: row.is_picked_up
+      pickup_status: row.is_picked_up
         ? "pickedUp"
         : row.has_driver
           ? "driverAccepted"
           : "findingDriver",
+      post_status: row.post_status,
+      expires_at: row.expires_at
     }));
 
     return posts;
   }
 
-  @Get(":postId")
+  @Get(":postId") // for edit 
   async getPost(@Param("postId") postIdParam: string) {
     const postId = Number(postIdParam);
 
@@ -99,11 +101,12 @@ export class PostController {
       const [postResult] =
         await connection.execute<ResultSetHeader>(
           `INSERT INTO Posts (posted_by, price, description, address_line, city, state, zip_code, latitude, longitude, 
-            pickup_notes, delivery_instruction, has_driver, is_picked_up)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, false, false)`,
+            pickup_notes, delivery_instruction, post_status, expires_at, has_driver, is_picked_up)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
+          'active', TIMESTAMP(DATE_ADD(CURDATE(), INTERVAL (6 - WEEKDAY(CURDATE())) DAY),'23:59:59'), false, false)`,
           [
             userId, price, description, address_line, city, state,
-            zip_code, latitude, longitude, pickup_notes, delivery_instruction,
+            zip_code, latitude, longitude, pickup_notes, delivery_instruction
           ],
         );
 
@@ -274,6 +277,40 @@ export class PostController {
 
     return { message: "Post updated successfully" };
 
+  }
+
+  @Patch(":postId/archive")
+  async archivePost(@Param("postId") postIdParam: string) {
+    const postId = Number(postIdParam);
+
+    await db.query(
+      `
+      UPDATE Posts
+      SET post_status = 'archived'
+      WHERE post_id = ?
+      `,
+      [postId],
+    );
+
+    return { message: "Post archived successfully" };
+  }
+
+  @Patch(":postId/reactivate")
+  async reactivatePost(@Param("postId") postIdParam: string) {
+    const postId = Number(postIdParam);
+
+    await db.query(
+      `
+      UPDATE Posts
+      SET post_status = 'active',
+          expires_at = TIMESTAMP(DATE_ADD(CURDATE(), INTERVAL (6 - WEEKDAY(CURDATE())) DAY), '23:59:59')
+      WHERE post_id = ?
+        AND post_status = 'expired'
+      `,
+      [postId],
+    );
+
+    return { message: "Post reactivated successfully" };
   }
 }
 

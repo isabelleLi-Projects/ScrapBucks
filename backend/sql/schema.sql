@@ -27,11 +27,13 @@ CREATE TABLE Posts (
     longitude          DECIMAL(11, 8) NOT NULL,
 
     pickup_notes     VARCHAR(300)   NOT NULL,
-    delivery_instruction 
-                    ENUM('pickup outside', 'knock please') NOT NULL,
+    delivery_instruction ENUM('pickup outside', 'knock please') NOT NULL,
+
     has_driver       BOOLEAN        NOT NULL DEFAULT FALSE,
     is_picked_up     BOOLEAN        NOT NULL DEFAULT FALSE,
     posted_by        INT            NOT NULL,
+    post_status ENUM('active', 'expired', 'archived') NOT NULL DEFAULT 'active',   
+    expires_at DATETIME NULL,
     FOREIGN KEY (posted_by) REFERENCES Users(user_id),
     driver_id        INT,
     FOREIGN KEY (driver_id) REFERENCES Users(user_id)
