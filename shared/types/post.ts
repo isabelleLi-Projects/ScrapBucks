@@ -22,6 +22,11 @@ export type TimeSlot = {
   end_time: string;
 };
 
+export type PostPhoto = {
+  url: string;
+  publicId: string;
+};
+
 type PickupLocation = {
   address_line: string;
   city: string;

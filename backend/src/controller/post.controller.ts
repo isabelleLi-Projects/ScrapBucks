@@ -1,5 +1,6 @@
 import { ResultSetHeader } from "mysql2";
 import { db } from "../config/database";
+import  cloudinary  from "../config/cloudinary"
 import { Controller, Get, Param, BadRequestException, Post, Body, InternalServerErrorException, Patch } from "@nestjs/common";
 
 @Controller("api/posts")
@@ -153,6 +154,7 @@ export class PostController {
   async updatePost(@Param("postId") postIdParam: string, @Body() body: any) {
     const postId = Number(postIdParam);
     const connection = await db.getConnection();
+    let removedPublicIds: string[] = [];
 
     try {
       await connection.beginTransaction();
@@ -203,8 +205,52 @@ export class PostController {
         );
       }
 
+
+      if (Array.isArray(body.photos)) {
+        const [oldPhotoRows] = await connection.query<any[]>(
+          `
+          SELECT cloudinary_public_id
+          FROM PostPhotos
+          WHERE post_id = ?
+          `,
+          [postId],
+        );
+
+        const oldPublicIds = oldPhotoRows.map((photo) => photo.cloudinary_public_id).filter(Boolean);
+
+        const photos = (body.photos ?? []) as PostPhoto[];
+        const newPublicIds = photos.map((photo) => photo.publicId).filter(Boolean);
+        removedPublicIds = oldPublicIds.filter((oldId) => !newPublicIds.includes(oldId));
+
+        // Replace this post's photo records
+        await connection.query(
+          `
+          DELETE FROM PostPhotos
+          WHERE post_id = ?
+          `,
+          [postId],
+        );
+
+        // Insert the photos that remain and any newly uploaded photos
+        for (let i = 0; i < photos.length; i++) {
+          const photo = photos[i];
+
+          await connection.query(
+            `
+            INSERT INTO PostPhotos (post_id, photo_order, photo_url, cloudinary_public_id)
+            VALUES (?, ?, ?, ?)
+            `,
+            [
+              postId,
+              i + 1,
+              photo.url,
+              photo.publicId,
+            ],
+          );
+        }
+      }
+
       await connection.commit();
-      return { message: "Post updated successfully" };
     
     } catch (error) {
         await connection.rollback();
@@ -212,5 +258,27 @@ export class PostController {
     } finally {
         connection.release();
     }
+
+    // The database connection is released before contacting Cloudinary
+    for (const publicId of removedPublicIds) {
+      try {
+        await cloudinary.uploader.destroy(publicId);
+      } catch (error) {
+        console.error(
+          "Could not delete Cloudinary image:",
+          publicId,
+          error,
+        );
+      }
+    }
+
+    return { message: "Post updated successfully" };
+
   }
 }
+
+
+type PostPhoto = {
+  url: string;
+  publicId: string;
+};

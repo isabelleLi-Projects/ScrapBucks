@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { days, TimeSlot } from "../../../shared/types/post";
+import { days, PostPhoto, TimeSlot } from "../../../shared/types/post";
 import { Button, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View} from "react-native";
 import { router } from "expo-router";
 import { Dropdown } from "react-native-element-dropdown";
@@ -14,7 +14,8 @@ export type PostFormData = {
     zipCode: string;
     pickupNotes: string;
     deliveryInstruction: "pickup outside" | "knock please";
-    imageUris: string[];
+    imageUris: string[];          // newly selected photos
+    existingPhotos: PostPhoto[];  // photos already on Cloudinary
     timeSlots: TimeSlot[];
 };
 
@@ -34,6 +35,7 @@ export default function PostForm({title, initialValues, submitLabel, onSubmit}: 
   const [pickupNotes, setPickupNotes] = useState(initialValues?.pickupNotes ?? "");
   const [deliveryInstruction, setDeliveryInstruction] =useState<"pickup outside" | "knock please">(initialValues?.deliveryInstruction ?? "pickup outside");
   const [imageUris, setImageUris] = useState<string[]>(initialValues?.imageUris ?? []);
+  const [existingPhotos, setExistingPhotos] = useState<PostPhoto[]>(initialValues?.existingPhotos ?? []);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>(
     initialValues?.timeSlots ?? [
       {
@@ -45,7 +47,7 @@ export default function PostForm({title, initialValues, submitLabel, onSubmit}: 
   );
 
   async function handleSubmit() {
-    await onSubmit({price, description, addressLine, city, zipCode, pickupNotes, deliveryInstruction, imageUris, timeSlots });
+    await onSubmit({price, description, addressLine, city, zipCode, pickupNotes, deliveryInstruction, imageUris, existingPhotos, timeSlots });
   }
 
   async function chooseImages() {
@@ -64,7 +66,7 @@ export default function PostForm({title, initialValues, submitLabel, onSubmit}: 
           });
   
           if (!result.canceled) {
-            setImageUris(result.assets.map((asset) => asset.uri));
+            setImageUris((currentUris) => [...currentUris,...result.assets.map((asset) => asset.uri)]);
           }
       }
   
@@ -176,22 +178,32 @@ export default function PostForm({title, initialValues, submitLabel, onSubmit}: 
           multiline
         />
 
-        <Text style={formStyles.Label}>Add Photos</Text>
-        <Button title="Choose Photo" onPress={chooseImages} />
+        <Text style={formStyles.Label}>Photos</Text>
+
         <ScrollView horizontal>
-          {imageUris.map((uri, index) => (
-            <Image
-              key={index}
-              source={{ uri }}
-              style={{
-                width: 100,
-                height: 100,
-                marginRight: 10,
-                borderRadius: 10,
-              }}
+        {existingPhotos.map((photo, index) => (
+            <View key={photo.publicId} style={formStyles.PhotoContainer}>
+            <Image source={{ uri: photo.url }} style={formStyles.Photo}/>
+
+            <Button title="Remove"
+                onPress={() => {setExistingPhotos((currentPhotos) =>currentPhotos.filter((_, photoIndex) => photoIndex !== index));}}
             />
-          ))}
+            </View>
+        ))}
+
+        {imageUris.map((uri, index) => (
+            <View key={uri} style={formStyles.PhotoContainer}>
+            <Image source={{ uri }} style={formStyles.Photo}/>
+
+            <Button
+                title="Remove"
+                onPress={() => {setImageUris((currentUris) => currentUris.filter((_, imageIndex) => imageIndex !== index));}}
+            />
+            </View>
+        ))}
         </ScrollView>
+
+        <Button title="Add Photos" onPress={chooseImages} />
 
         <Text style={formStyles.Label}>Times Available</Text>
 
@@ -329,5 +341,15 @@ const formStyles = StyleSheet.create({
     borderColor: "#B7C9D8",
     borderRadius: 10,
     backgroundColor: "#ffffff7d",
-  }
+  },
+  PhotoContainer: {
+    alignItems: "center",
+    marginRight: 10,
+  },
+  Photo: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+    marginBottom: 5,
+  },
 });

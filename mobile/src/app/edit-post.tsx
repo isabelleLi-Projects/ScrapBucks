@@ -32,6 +32,7 @@ export default function EditPost() {
             deliveryInstruction:
               post.delivery_instruction ?? "pickup outside",
             imageUris: [],
+            existingPhotos: post.photos ?? [],
             timeSlots: post.time_slots ?? [],
           });
         } catch (error) {
@@ -69,9 +70,7 @@ export default function EditPost() {
           pickup_notes: formData.pickupNotes,
           delivery_instruction: formData.deliveryInstruction,
           time_slots: formData.timeSlots,
-
-          // Only include this if you want to replace/add photos.
-          photos: uploadedPhotos,
+          photos: [...formData.existingPhotos,...uploadedPhotos],
         };
         
 
