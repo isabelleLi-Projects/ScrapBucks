@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { uploadImage } from "../utils/cloudinary"
 import { getCoordinates } from "../utils/location";
 import PostForm, { PostFormData } from "@/components/post-form";
+import { PostStatus } from "../../../shared/types/post";
 
 const API_URL = "http://10.1.10.149:3000"; // get ip with ipconfig getifaddr en0
 
@@ -11,6 +12,7 @@ export default function EditPost() {
     const router = useRouter();
     const { postId } = useLocalSearchParams<{ postId: string }>();
     const [initialValues, setInitialValues] = useState<Partial<PostFormData> | null>(null);
+    const [postStatus, setPostStatus] = useState<PostStatus | null>(null);
 
     useEffect(() => {
       if (!postId) return;
@@ -21,6 +23,8 @@ export default function EditPost() {
           if (!response.ok) {throw new Error("Could not load post");}
 
           const post = await response.json();
+
+          setPostStatus(post.post_status);
 
           setInitialValues({
             price: String(post.price ?? ""),
@@ -73,6 +77,20 @@ export default function EditPost() {
           photos: [...formData.existingPhotos,...uploadedPhotos],
         };
         
+        if (postStatus === "expired") {
+          try {
+            const response = await fetch(`${API_URL}/api/posts/${postId}/reactivate`, { method: "PATCH" });
+
+            if (!response.ok) {
+              throw new Error("Could not reactivate post");
+            }
+
+          } catch (error) {
+            console.error("Error reactivating post:", error);
+            Alert.alert("Error", "Could not reactivate post.");
+            return;
+          }
+        }
 
         try {
             const response = await fetch(
@@ -108,7 +126,7 @@ export default function EditPost() {
     <PostForm
           title="Edit Post"
           initialValues={initialValues}
-          submitLabel="Save Changes"
+          submitLabel={postStatus === "expired" ? "Reactivate Post" : "Save Changes"}
           onSubmit={updatePost}
         />
   );

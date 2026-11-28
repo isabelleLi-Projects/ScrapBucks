@@ -64,7 +64,7 @@ useFocusEffect(
       }
 
       setPosts((currentPosts) =>
-        currentPosts.filter((post) => post.post_id !== postId)
+        currentPosts.map((post) => post.post_id === postId ? { ...post, post_status: "archived" } : post)
       );
     } catch (error) {
       console.error("Error archiving post:", error);
@@ -288,7 +288,9 @@ function PostDisplay({post, onArchive}: {post: Post; onArchive: (postId: number)
           </Text>
         </View>
       </View>
-      <ProgressTracker status={post.pickup_status} />
+      {post.post_status !== "archived" ? 
+      (<ProgressTracker status={post.pickup_status} />) 
+      : <Text style={customerStyles.PostTextBody}>{'\n'}This post is archived.</Text>}
 
     </View>
   );

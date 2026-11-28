@@ -57,7 +57,7 @@ export class PostController {
     const postId = Number(postIdParam);
 
     const [rows] = await db.query<any[]>(
-      `SELECT p.price, p.description, p.address_line, p.city, p.state, p.zip_code, p.pickup_notes, p.delivery_instruction,
+      `SELECT p.price, p.description, p.address_line, p.city, p.state, p.zip_code, p.pickup_notes, p.delivery_instruction, p.post_status, 
         (SELECT JSON_ARRAYAGG(JSON_OBJECT('url', pp.photo_url,'publicId', pp.cloudinary_public_id)) FROM PostPhotos pp WHERE pp.post_id = p.post_id) AS photos,
         (SELECT JSON_ARRAYAGG(JSON_OBJECT('day_of_week', ta.day_of_week, 'start_time', ta.start_time,'end_time', ta.end_time)) FROM TimeAvailable ta WHERE ta.post_id = p.post_id) AS time_slots
       FROM Posts p
