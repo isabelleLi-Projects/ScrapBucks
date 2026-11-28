@@ -4,6 +4,7 @@ import { Button, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, S
 import { router } from "expo-router";
 import { Dropdown } from "react-native-element-dropdown";
 import * as ImagePicker from "expo-image-picker";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 export type PostFormData = {
     price: string;
@@ -76,7 +77,7 @@ export default function PostForm({title, initialValues, submitLabel, onSubmit}: 
         );
       }
   
-      function addTimeSlot() {
+    function addTimeSlot() {
         setTimeSlots((currentSlots) => [...currentSlots,
           {
             day_of_week: 1,
@@ -86,6 +87,31 @@ export default function PostForm({title, initialValues, submitLabel, onSubmit}: 
         ]);
       }
 
+    function removeTimeSlot(index: number) {
+        setTimeSlots((currentSlots) =>
+        currentSlots.filter((_, slotIndex) => slotIndex !== index)
+        );
+    }
+
+    function timeStringToDate(time: string) {
+        const date = new Date();
+
+        if (time) {
+            const [hours, minutes] = time.split(":").map(Number);
+            date.setHours(hours, minutes, 0, 0);
+        } else {
+            date.setHours(0, 0, 0, 0);
+        }
+
+        return date;
+    }
+
+    function formatTimeForDatabase(date: Date) {
+        const hours = String(date.getHours()).padStart(2, "0");
+        const minutes = String(date.getMinutes()).padStart(2, "0");
+        return `${hours}:${minutes}:00`;
+    }
+    
   return (
     <KeyboardAvoidingView style={formStyles.Screen} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <ScrollView contentContainerStyle={formStyles.Form}>
@@ -170,7 +196,7 @@ export default function PostForm({title, initialValues, submitLabel, onSubmit}: 
         <Text style={formStyles.Label}>Times Available</Text>
 
         {timeSlots.map((slot, index) => (
-          <View key={index}>
+          <View key={index} style={formStyles.TimeSlot}>
             <Text style={formStyles.Label}>
               Availability {index + 1}
             </Text>
@@ -185,24 +211,35 @@ export default function PostForm({title, initialValues, submitLabel, onSubmit}: 
                 updateTimeSlot(index, "day_of_week", item.value)
               }
             />
+            <View style={formStyles.TimePicker}>
+                <DateTimePicker value={timeStringToDate(slot.start_time)}
+                    mode="time"
+                    is24Hour={false}
+                    onChange={(event, selectedDate) => {
+                    if (selectedDate) {
+                        const newTime = formatTimeForDatabase(selectedDate);
 
-            <TextInput
-              style={formStyles.Input}
-              placeholder="Start time, example: 09:00:00"
-              value={slot.start_time}
-              onChangeText={(value) =>
-                updateTimeSlot(index, "start_time", value)
-              }
-            />
+                        console.log("New start time:", newTime);
 
-            <TextInput
-              style={formStyles.Input}
-              placeholder="End time, example: 12:00:00"
-              value={slot.end_time}
-              onChangeText={(value) =>
-                updateTimeSlot(index, "end_time", value)
-              }
-            />
+                        updateTimeSlot(index, "start_time", newTime);
+                    }
+                    }}
+                />
+                
+                <Text>   to </Text>
+
+                <DateTimePicker value={timeStringToDate(slot.end_time)}
+                    mode="time"
+                    is24Hour={false}
+                    onChange={(event, selectedDate) => {
+                    if (selectedDate) {
+                        updateTimeSlot(index, "end_time", formatTimeForDatabase(selectedDate));
+                    }
+                    }}
+                />
+            </View>
+
+            <Button title="Remove Time" onPress={() => removeTimeSlot(index)}/>
           </View>
         ))}
 
@@ -278,4 +315,19 @@ const formStyles = StyleSheet.create({
   Button: {
     marginTop: 25,
   },
+
+  TimePicker: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 10
+  },
+  TimeSlot: {
+    marginVertical: 10,
+    padding: 10,
+    paddingTop: 0,
+    borderWidth: 1,
+    borderColor: "#B7C9D8",
+    borderRadius: 10,
+    backgroundColor: "#ffffff7d",
+  }
 });

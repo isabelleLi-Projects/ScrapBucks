@@ -150,34 +150,67 @@ export class PostController {
   }
 
   @Patch(":postId")
-  async updatePost(
-    @Param("postId") postIdParam: string,
-    @Body() body: any,
-  ) {
+  async updatePost(@Param("postId") postIdParam: string, @Body() body: any) {
     const postId = Number(postIdParam);
+    const connection = await db.getConnection();
 
-    await db.query(
-      `
-      UPDATE Posts
-      SET price = ?, description = ?, address_line = ?, city = ?, state = ?, zip_code = ?, latitude = ?, longitude = ?, 
-          pickup_notes = ?, delivery_instruction = ?
-      WHERE post_id = ?
-      `,
-      [
-        body.price,
-        body.description,
-        body.address_line,
-        body.city,
-        body.state,
-        body.zip_code,
-        body.latitude,
-        body.longitude,
-        body.pickup_notes,
-        body.delivery_instruction,
-        postId,
-      ],
-    );
+    try {
+      await connection.beginTransaction();
 
-    return { message: "Post updated successfully" };
+      await connection.query(
+        `
+        UPDATE Posts
+        SET price = ?, description = ?, address_line = ?, city = ?, state = ?, zip_code = ?, latitude = ?, longitude = ?, 
+            pickup_notes = ?, delivery_instruction = ?
+        WHERE post_id = ?
+        `,
+        [
+          body.price,
+          body.description,
+          body.address_line,
+          body.city,
+          body.state,
+          body.zip_code,
+          body.latitude,
+          body.longitude,
+          body.pickup_notes,
+          body.delivery_instruction,
+          postId,
+        ],
+      );
+
+      await connection.query(
+        `DELETE FROM TimeAvailable WHERE post_id = ?`,
+        [postId],
+      );
+
+      for (let i = 0; i < (body.time_slots ?? []).length; i++) {
+        const slot = body.time_slots[i];
+
+        await connection.query(
+          `
+          INSERT INTO TimeAvailable
+            (time_id, post_id, day_of_week, start_time, end_time)
+          VALUES (?, ?, ?, ?, ?)
+          `,
+          [
+            i + 1,
+            postId,
+            slot.day_of_week,
+            slot.start_time.split(".")[0],
+            slot.end_time.split(".")[0],
+          ],
+        );
+      }
+
+      await connection.commit();
+      return { message: "Post updated successfully" };
+    
+    } catch (error) {
+        await connection.rollback();
+        throw error;
+    } finally {
+        connection.release();
+    }
   }
 }
