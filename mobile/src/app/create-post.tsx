@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { uploadImage } from "../utils/cloudinary"
@@ -12,7 +11,8 @@ export default function CreatePost() {
     const userId = 2;
 
     async function createPost(formData: PostFormData) {
-        if (!formData.price || !formData.description || !formData.addressLine || !formData.city || !formData.zipCode) {
+      const hasPhoto = (formData.existingPhotos?.length ?? 0) > 0 || (formData.imageUris?.length ?? 0) > 0;
+        if (!formData.price || !formData.description || !formData.addressLine || !formData.city || !formData.zipCode || !hasPhoto) {
             Alert.alert("Missing information", "Please fill out all required fields.");
             return;
         }

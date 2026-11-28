@@ -49,7 +49,8 @@ export default function EditPost() {
     }, [postId]);
 
     async function updatePost(formData: PostFormData) {
-        if (!formData.price || !formData.description || !formData.addressLine || !formData.city || !formData.zipCode) {
+      const hasPhoto = (formData.existingPhotos?.length ?? 0) > 0 || (formData.imageUris?.length ?? 0) > 0;
+        if (!formData.price || !formData.description || !formData.addressLine || !formData.city || !formData.zipCode || !hasPhoto) {
             Alert.alert("Missing information", "Please fill out all required fields.");
             return;
         }
